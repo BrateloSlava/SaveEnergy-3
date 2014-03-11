@@ -200,6 +200,34 @@ static inline unsigned long bdi_stat_error(struct backing_dev_info *bdi)
 int bdi_set_min_ratio(struct backing_dev_info *bdi, unsigned int min_ratio);
 int bdi_set_max_ratio(struct backing_dev_info *bdi, unsigned int max_ratio);
 
+/*
+ * Flags in backing_dev_info::capability
+ *
+ * The first three flags control whether dirty pages will contribute to the
+ * VM's accounting and whether writepages() should be called for dirty pages
+ * (something that would not, for example, be appropriate for ramfs)
+ *
+ * WARNING: these flags are closely related and should not normally be
+ * used separately.  The BDI_CAP_NO_ACCT_AND_WRITEBACK combines these
+ * three flags into a single convenience macro.
+ *
+ * BDI_CAP_NO_ACCT_DIRTY:  Dirty pages shouldn't contribute to accounting
+ * BDI_CAP_NO_WRITEBACK:   Don't write pages back
+ * BDI_CAP_NO_ACCT_WB:     Don't automatically account writeback pages
+ *
+ * These flags let !MMU mmap() govern direct device mapping vs immediate
+ * copying more easily for MAP_PRIVATE, especially for ROM filesystems.
+ *
+ * BDI_CAP_MAP_COPY:       Copy can be mapped (MAP_PRIVATE)
+ * BDI_CAP_MAP_DIRECT:     Can be mapped directly (MAP_SHARED)
+ * BDI_CAP_READ_MAP:       Can be mapped for reading
+ * BDI_CAP_WRITE_MAP:      Can be mapped for writing
+ * BDI_CAP_EXEC_MAP:       Can be mapped for execution
+ *
+ * BDI_CAP_SWAP_BACKED:    Count shmem/tmpfs objects as swap-backed.
+ *
+ * BDI_CAP_STRICTLIMIT:    Keep number of dirty pages below bdi threshold.
+ */
 #define BDI_CAP_NO_ACCT_DIRTY	0x00000001
 #define BDI_CAP_NO_WRITEBACK	0x00000002
 #define BDI_CAP_MAP_COPY	0x00000004
@@ -209,6 +237,7 @@ int bdi_set_max_ratio(struct backing_dev_info *bdi, unsigned int max_ratio);
 #define BDI_CAP_EXEC_MAP	0x00000040
 #define BDI_CAP_NO_ACCT_WB	0x00000080
 #define BDI_CAP_SWAP_BACKED	0x00000100
+#define BDI_CAP_STRICTLIMIT	0x00000400
 
 #define BDI_CAP_VMFLAGS \
 	(BDI_CAP_READ_MAP | BDI_CAP_WRITE_MAP | BDI_CAP_EXEC_MAP)

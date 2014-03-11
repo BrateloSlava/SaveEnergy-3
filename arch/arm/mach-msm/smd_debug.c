@@ -61,10 +61,10 @@ static int debug_f3(char *buf, int max)
 
 	x = smem_get_entry(SMEM_ERR_F3_TRACE_LOG, &size);
 	if (x != 0) {
-		pr_info("smem: F3 TRACE LOG\n");
+		//pr_info("smem: F3 TRACE LOG\n");
 		while (size > 0) {
 			if (size >= sizeof(unsigned)) {
-				pr_info("%08x", *((unsigned *) x));
+				//pr_info("%08x", *((unsigned *) x));
 				for (j = 0; j < sizeof(unsigned); ++j)
 					if (isprint(*(x+j)))
 						str[cols*sizeof(unsigned) + j]
@@ -76,20 +76,20 @@ static int debug_f3(char *buf, int max)
 				size -= sizeof(unsigned);
 			} else {
 				while (size-- > 0)
-					pr_info("%02x", (unsigned) *x++);
+					/*pr_info("%02x", (unsigned) *x++)*/;
 				break;
 			}
 			if (cols == 3) {
 				cols = 0;
 				str[4*sizeof(unsigned)] = 0;
-				pr_info(" %s\n", str);
+				//pr_info(" %s\n", str);
 				str[0] = 0;
 			} else {
 				cols++;
-				pr_info(" ");
+				//pr_info(" ");
 			}
 		}
-		pr_info("\n");
+		//pr_info("\n");
 	}
 
 	return max;
@@ -171,7 +171,7 @@ static int debug_modem_err_f3(char *buf, int max)
 
 	x = smem_get_entry(SMEM_ERR_F3_TRACE_LOG, &size);
 	if (x != 0) {
-		pr_info("smem: F3 TRACE LOG\n");
+		//pr_info("smem: F3 TRACE LOG\n");
 		while (size > 0 && max - i) {
 			if (size >= sizeof(unsigned)) {
 				i += scnprintf(buf + i, max - i, "%08x",
@@ -835,32 +835,32 @@ void smsm_print_sleep_info(uint32_t sleep_delay, uint32_t sleep_limit,
 
 	spin_lock_irqsave(&smem_lock, flags);
 
-	pr_info("SMEM_SMSM_SLEEP_DELAY: %x\n", sleep_delay);
-	pr_info("SMEM_SMSM_LIMIT_SLEEP: %x\n", sleep_limit);
+	//pr_info("SMEM_SMSM_SLEEP_DELAY: %x\n", sleep_delay);
+	//pr_info("SMEM_SMSM_LIMIT_SLEEP: %x\n", sleep_limit);
 
 	ptr = smem_alloc(SMEM_SLEEP_POWER_COLLAPSE_DISABLED, sizeof(*ptr));
 	if (ptr)
-		pr_info("SMEM_SLEEP_POWER_COLLAPSE_DISABLED: %x\n", *ptr);
+		/*pr_info("SMEM_SLEEP_POWER_COLLAPSE_DISABLED: %x\n", *ptr)*/;
 	else
-		pr_info("SMEM_SLEEP_POWER_COLLAPSE_DISABLED: missing\n");
+		/*pr_info("SMEM_SLEEP_POWER_COLLAPSE_DISABLED: missing\n")*/;
 
-	pr_info("SMEM_SMSM_INT_INFO %x %x %x\n",
-		irq_mask, pending_irqs, wakeup_reason);
+	/*pr_info("SMEM_SMSM_INT_INFO %x %x %x\n",
+		irq_mask, pending_irqs, wakeup_reason);*/
 
 	gpio = smem_alloc(SMEM_GPIO_INT, sizeof(*gpio));
 	if (gpio) {
 		int i;
 		for (i = 0; i < NUM_GPIO_INT_REGISTERS; i++)
-			pr_info("SMEM_GPIO_INT: %d: e %x d %x p %x\n",
+			/*pr_info("SMEM_GPIO_INT: %d: e %x d %x p %x\n",
 				i, gpio->enabled[i], gpio->detection[i],
-				gpio->polarity[i]);
+				gpio->polarity[i])*/;
 
 		for (i = 0; i < GPIO_SMEM_NUM_GROUPS; i++)
-			pr_info("SMEM_GPIO_INT: %d: f %d: %d %d...\n",
+			/*pr_info("SMEM_GPIO_INT: %d: f %d: %d %d...\n",
 				i, gpio->num_fired[i], gpio->fired[i][0],
-				gpio->fired[i][1]);
+				gpio->fired[i][1])*/;
 	} else
-		pr_info("SMEM_GPIO_INT: missing\n");
+		/*pr_info("SMEM_GPIO_INT: missing\n")*/;
 
 	spin_unlock_irqrestore(&smem_lock, flags);
 }

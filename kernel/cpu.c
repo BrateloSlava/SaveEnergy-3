@@ -17,9 +17,16 @@
 #include <linux/gfp.h>
 #include <linux/suspend.h>
 
+#include "smpboot.h"
+
 #ifdef CONFIG_SMP
+/* Serializes the updates to cpu_online_mask, cpu_present_mask */
 static DEFINE_MUTEX(cpu_add_remove_lock);
 
+/*
+ * The following two API's must be used when attempting
+ * to serialize the updates to cpu_online_mask, cpu_present_mask.
+ */
 void cpu_maps_update_begin(void)
 {
 	mutex_lock(&cpu_add_remove_lock);
@@ -32,13 +39,20 @@ void cpu_maps_update_done(void)
 
 static RAW_NOTIFIER_HEAD(cpu_chain);
 
+/* If set, cpu_up and cpu_down will return -EBUSY and do nothing.
+ * Should always be manipulated under cpu_add_remove_lock
+ */
 static int cpu_hotplug_disabled;
 
 #ifdef CONFIG_HOTPLUG_CPU
 
 static struct {
 	struct task_struct *active_writer;
-	struct mutex lock; 
+	struct mutex lock; /* Synchronizes accesses to refcount, */
+	/*
+	 * Also blocks the new readers during
+	 * an ongoing cpu hotplug operation.
+	 */
 	int refcount;
 } cpu_hotplug = {
 	.active_writer = NULL,
@@ -70,6 +84,28 @@ void put_online_cpus(void)
 }
 EXPORT_SYMBOL_GPL(put_online_cpus);
 
+/*
+ * This ensures that the hotplug operation can begin only when the
+ * refcount goes to zero.
+ *
+ * Note that during a cpu-hotplug operation, the new readers, if any,
+ * will be blocked by the cpu_hotplug.lock
+ *
+ * Since cpu_hotplug_begin() is always called after invoking
+ * cpu_maps_update_begin(), we can be sure that only one writer is active.
+ *
+ * Note that theoretically, there is a possibility of a livelock:
+ * - Refcount goes to zero, last reader wakes up the sleeping
+ *   writer.
+ * - Last reader unlocks the cpu_hotplug.lock.
+ * - A new reader arrives at this moment, bumps up the refcount.
+ * - The writer acquires the cpu_hotplug.lock finds the refcount
+ *   non zero and goes to sleep again.
+ *
+ * However, this is very difficult to achieve in practice since
+ * get_online_cpus() not an api which is called all that often.
+ *
+ */
 static void cpu_hotplug_begin(void)
 {
 	cpu_hotplug.active_writer = current;
@@ -90,11 +126,12 @@ static void cpu_hotplug_done(void)
 	mutex_unlock(&cpu_hotplug.lock);
 }
 
-#else 
+#else /* #if CONFIG_HOTPLUG_CPU */
 static void cpu_hotplug_begin(void) {}
 static void cpu_hotplug_done(void) {}
-#endif	
+#endif	/* #else #if CONFIG_HOTPLUG_CPU */
 
+/* Need to know about CPUs going up/down? */
 int __ref register_cpu_notifier(struct notifier_block *nb)
 {
 	int ret;
@@ -157,12 +194,13 @@ struct take_cpu_down_param {
 	void *hcpu;
 };
 
+/* Take this CPU down. */
 static int __ref take_cpu_down(void *_param)
 {
 	struct take_cpu_down_param *param = _param;
 	int err;
 
-	
+	/* Ensure this CPU doesn't handle any more interrupts. */
 	err = __cpu_disable();
 	if (err < 0)
 		return err;
@@ -201,23 +239,31 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
 				__func__, cpu);
 		goto out_release;
 	}
+	smpboot_park_threads(cpu);
 
 	err = __stop_machine(take_cpu_down, &tcd_param, cpumask_of(cpu));
 	if (err) {
-		
+		/* CPU didn't die: tell everyone.  Can't complain. */
+		smpboot_unpark_threads(cpu);
 		cpu_notify_nofail(CPU_DOWN_FAILED | mod, hcpu);
-
 		goto out_release;
 	}
 	BUG_ON(cpu_online(cpu));
 
+	/*
+	 * The migration_call() CPU_DYING callback will have removed all
+	 * runnable tasks from the cpu, there's only the idle task left now
+	 * that the migration thread is done doing the stop_machine thing.
+	 *
+	 * Wait for the stop thread to go away.
+	 */
 	while (!idle_cpu(cpu))
 		cpu_relax();
 
-	
+	/* This actually kills the CPU. */
 	__cpu_die(cpu);
 
-	
+	/* CPU is completely dead: tell everyone.  Too late to complain. */
 	cpu_notify_nofail(CPU_DEAD | mod, hcpu);
 
 	check_for_tasks(cpu);
@@ -253,18 +299,31 @@ out:
 	return err;
 }
 EXPORT_SYMBOL(cpu_down);
-#endif 
+#endif /*CONFIG_HOTPLUG_CPU*/
 
+/* Requires cpu_add_remove_lock to be held */
 static int __cpuinit _cpu_up(unsigned int cpu, int tasks_frozen)
 {
 	int ret, nr_calls = 0;
 	void *hcpu = (void *)(long)cpu;
 	unsigned long mod = tasks_frozen ? CPU_TASKS_FROZEN : 0;
+	struct task_struct *idle;
 
 	if (cpu_online(cpu) || !cpu_present(cpu))
 		return -EINVAL;
 
 	cpu_hotplug_begin();
+
+	idle = idle_thread_get(cpu);
+	if (IS_ERR(idle)) {
+		ret = PTR_ERR(idle);
+		goto out;
+	}
+
+	ret = smpboot_create_threads(cpu);
+	if (ret)
+		goto out;
+
 	ret = __cpu_notify(CPU_UP_PREPARE | mod, hcpu, -1, &nr_calls);
 	if (ret) {
 		nr_calls--;
@@ -273,18 +332,22 @@ static int __cpuinit _cpu_up(unsigned int cpu, int tasks_frozen)
 		goto out_notify;
 	}
 
-	
-	ret = __cpu_up(cpu);
+	/* Arch-specific enabling code. */
+	ret = __cpu_up(cpu, idle);
 	if (ret != 0)
 		goto out_notify;
 	BUG_ON(!cpu_online(cpu));
 
-	
+	/* Wake the per cpu threads */
+	smpboot_unpark_threads(cpu);
+
+	/* Now call notifier in preparation. */
 	cpu_notify(CPU_ONLINE | mod, hcpu);
 
 out_notify:
 	if (ret != 0)
 		__cpu_notify(CPU_UP_CANCELED | mod, hcpu, nr_calls, NULL);
+out:
 	cpu_hotplug_done();
 
 	return ret;

@@ -188,7 +188,7 @@ static int __init msm_sleep_info_init(void)
 	struct sleep_data *sleep_info = NULL;
 	struct hrtimer *timer;
 
-	printk(KERN_INFO "msm_sleep_stats: Initializing sleep stats ");
+	//printk(KERN_INFO "msm_sleep_stats: Initializing sleep stats ");
 	sleep_info = &core_sleep_info;
 	adaptive_wq = create_singlethread_workqueue("adaptive");
 	INIT_WORK(&sleep_info->work, notify_uspace_work_fn);
@@ -203,14 +203,14 @@ static int __init msm_sleep_info_init(void)
 		err = msm_cpuidle_register_notifier(cpu,
 					&sleep_info->notifier);
 		if (err) {
-			pr_err("%s: failed to register idle notification\n", __func__);
+			/*pr_err("%s: failed to register idle notification\n", __func__)*/;
 		}
 	}
 
 	
 	err = add_sysfs_objects(sleep_info);
 	if (err) {
-		printk(KERN_INFO "msm_sleep_stats: Failed to initialize sleep stats");
+		//printk(KERN_INFO "msm_sleep_stats: Failed to initialize sleep stats");
 		remove_sysfs_objects(sleep_info);
 	}
 

@@ -1,0 +1,27 @@
+#!/system/bin/sh
+
+#
+#  Copyright (C) 2013 BrateloSlava, 4pda.ru + forum.xda-developers.com
+#  For HTC One SV (Android 4.2.2)
+#
+##
+
+### Clear and lock folder
+
+if [ -e /data/tombstones/ ]; then
+     rm -rf /data/tombstones/*
+     chmod 444 /data/tombstones
+fi;
+
+if [ -e /data/system/appsusagestats/ ]; then
+     rm -rf /data/system/appsusagestats/*
+     chmod 444 /data/system/appsusagestats
+fi;
+
+if [ -e /data/system/dropbox/ ]; then
+     rm -rf /data/system/dropbox/*
+     chmod 444 /data/system/dropbox
+fi;
+
+##
+

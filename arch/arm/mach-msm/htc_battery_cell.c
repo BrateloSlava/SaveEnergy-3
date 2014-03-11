@@ -39,7 +39,7 @@ static struct htc_battery_cell default_cell = {
 int htc_battery_cell_init(struct htc_battery_cell *ary, int ary_size)
 {
 	if (ary == NULL || ary_size == 0) {
-		pr_warn("[BATT] %s: default cell initiated\n", __func__);
+		//pr_warn("[BATT] %s: default cell initiated\n", __func__);
 		cells = &default_cell;
 		cell_num = 1;
 		return 1;
@@ -47,7 +47,7 @@ int htc_battery_cell_init(struct htc_battery_cell *ary, int ary_size)
 
 	cells = ary;
 	cell_num = ary_size;
-	pr_info("[BATT] %s: %d cells initiated.\n", __func__, cell_num);
+	//pr_info("[BATT] %s: %d cells initiated.\n", __func__, cell_num);
 	return 0;
 }
 
@@ -68,17 +68,17 @@ inline int htc_battery_cell_set_cur_cell_by_id(int id)
 	int i = 0;
 	struct htc_battery_cell *pcell = NULL;
 
-	pr_debug("%s: find id=%d\n", __func__, id);
+	//pr_debug("%s: find id=%d\n", __func__, id);
 	for (i = 0; i < cell_num; i++) {
 		pcell = &cells[i];
-		pr_debug("    cell[%d].id=%d\n", i, pcell->id);
+		//pr_debug("    cell[%d].id=%d\n", i, pcell->id);
 		if (pcell->id == id) {
-			pr_info("%s: set_cur_cell(id=%d)\n", __func__, id);
+			//pr_info("%s: set_cur_cell(id=%d)\n", __func__, id);
 			cur_cell = pcell;
 			return 0;
 		}
 	}
-	pr_err("[BATT] %s: cell id=%d cannot be found\n", __func__, id);
+	//pr_err("[BATT] %s: cell id=%d cannot be found\n", __func__, id);
 	return 1;
 }
 
@@ -101,17 +101,17 @@ inline struct htc_battery_cell *htc_battery_cell_find(int id_raw)
 	int i = 0;
 	struct htc_battery_cell *pcell = NULL;
 
-	pr_debug("%s: find id_raw=%d\n", __func__, id_raw);
+	//pr_debug("%s: find id_raw=%d\n", __func__, id_raw);
 	for (i = 0; i < cell_num; i++) {
 		pcell = &cells[i];
-		pr_debug("    i=%d, (min,max)=(%d,%d)\n",
-				i, pcell->id_raw_min, pcell->id_raw_max);
+		/*pr_debug("    i=%d, (min,max)=(%d,%d)\n",
+				i, pcell->id_raw_min, pcell->id_raw_max);*/
 		if ((pcell->id_raw_min <= id_raw)
 				&& (id_raw <= pcell->id_raw_max))
 			return pcell;
 	}
-	pr_err("[BATT] %s: cell id can not be identified (id_raw=%d)\n",
-			__func__, id_raw);
+	/*pr_err("[BATT] %s: cell id can not be identified (id_raw=%d)\n",
+			__func__, id_raw);*/
 	
 	return pcell;
 }
@@ -124,7 +124,7 @@ inline int htc_battery_cell_find_and_set_id_auto(int id_raw)
 
 	pcell = htc_battery_cell_find(id_raw);
 	if (!pcell) {
-		pr_err("[BATT] cell pointer is NULL so unknown ID is return.\n");
+		//pr_err("[BATT] cell pointer is NULL so unknown ID is return.\n");
 		return HTC_BATTERY_CELL_ID_UNKNOWN;
 	}
 	
@@ -140,12 +140,12 @@ inline int htc_battery_cell_find_and_set_id_auto(int id_raw)
 			unknown_count = 0;
 	} else {
 		
-		pr_warn("[BATT]warn: cur_cell is initiated by %s", __func__);
+		//pr_warn("[BATT]warn: cur_cell is initiated by %s", __func__);
 		cur_cell = pcell;
 		return pcell->id;
 	}
-	pr_debug("[BATT]dbg: battery cell id %d -> %d\n",
-			cur_cell->id, pcell->id);
+	/*pr_debug("[BATT]dbg: battery cell id %d -> %d\n",
+			cur_cell->id, pcell->id);*/
 	cur_cell = pcell;
 	return pcell->id;
 }
@@ -159,13 +159,11 @@ static int __init check_dq_setup(char *str)
 {
 	if (!strcmp(str, "PASS")) {
 		hv_authenticated = 1;
-		pr_info("[BATT] HV authentication passed.\n");
+		//pr_info("[BATT] HV authentication passed.\n");
 	} else {
 		hv_authenticated = 0;
-		pr_info("[BATT] HV authentication failed.\n");
+		//pr_info("[BATT] HV authentication failed.\n");
 	}
 	return 0; 
 }
 __setup("androidboot.dq=", check_dq_setup);
-
-

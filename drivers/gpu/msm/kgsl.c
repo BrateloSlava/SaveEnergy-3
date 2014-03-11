@@ -102,10 +102,10 @@ unsigned int kgsl_get_alloc_size(int detailed)
 	int i = 0;
 
 	ret = kgsl_driver.stats.page_alloc;
-	printk("kgsl: kgsl_driver.stats.page_alloc = %u\n", kgsl_driver.stats.page_alloc);
-	printk("kgsl: kgsl_driver.stats.page_alloc_kernel = %u\n", kgsl_driver.stats.page_alloc_kernel);
-	printk("kgsl: kgsl_driver.stats.pre_alloc = %u\n", kgsl_driver.stats.pre_alloc);
-	printk("kgsl: kgsl_driver.stats.pre_alloc_kernel = %u\n", kgsl_driver.stats.pre_alloc_kernel);
+	//printk("kgsl: kgsl_driver.stats.page_alloc = %u\n", kgsl_driver.stats.page_alloc);
+	//printk("kgsl: kgsl_driver.stats.page_alloc_kernel = %u\n", kgsl_driver.stats.page_alloc_kernel);
+	//printk("kgsl: kgsl_driver.stats.pre_alloc = %u\n", kgsl_driver.stats.pre_alloc);
+	//printk("kgsl: kgsl_driver.stats.pre_alloc_kernel = %u\n", kgsl_driver.stats.pre_alloc_kernel);
 
 	if (!detailed)
 		return ret;
@@ -115,16 +115,16 @@ unsigned int kgsl_get_alloc_size(int detailed)
 	list_for_each_entry(private, &kgsl_driver.process_list, list) {
 		if (!private)
 			continue;
-		printk("kgsl: below is going to list all memory info of pid:%d \n", private->pid);
+		//printk("kgsl: below is going to list all memory info of pid:%d \n", private->pid);
 		for (i = 0; i < KGSL_MEM_ENTRY_MAX; i++) {
 			switch (i) {
 			case KGSL_MEM_ENTRY_PAGE_ALLOC:
-				if (private != NULL && private->stats[KGSL_MEM_ENTRY_PAGE_ALLOC].cur != 0)
-					printk("kgsl: page alloc %d\n", private->stats[KGSL_MEM_ENTRY_PAGE_ALLOC].cur);
+				/*if (private != NULL && private->stats[KGSL_MEM_ENTRY_PAGE_ALLOC].cur != 0)
+					printk("kgsl: page alloc %d\n", private->stats[KGSL_MEM_ENTRY_PAGE_ALLOC].cur);*/
 				break;
 			case KGSL_MEM_ENTRY_PRE_ALLOC:
-				if (private != NULL && private->stats[KGSL_MEM_ENTRY_PRE_ALLOC].cur != 0)
-					printk("kgsl: pre alloc %d\n", private->stats[KGSL_MEM_ENTRY_PRE_ALLOC].cur);
+				/*if (private != NULL && private->stats[KGSL_MEM_ENTRY_PRE_ALLOC].cur != 0)
+					printk("kgsl: pre alloc %d\n", private->stats[KGSL_MEM_ENTRY_PRE_ALLOC].cur);*/
 				break;
 			}
 		}
@@ -179,7 +179,7 @@ kgsl_dump_contextpid(struct idr *context_idr)
 	char task_name[TASK_COMM_LEN+1] = {0};
 	char task_parent_name[TASK_COMM_LEN+1] = {0};
 
-	printk(" == [KGSL] context maximal count is %d, dump context id, pid, name, group leader name==\n",KGSL_MEMSTORE_MAX);
+	//printk(" == [KGSL] context maximal count is %d, dump context id, pid, name, group leader name==\n",KGSL_MEMSTORE_MAX);
 	for (i = 0; i <KGSL_MEMSTORE_MAX; i++) {
 
 		context = idr_find(context_idr, i);
@@ -194,7 +194,7 @@ kgsl_dump_contextpid(struct idr *context_idr)
 					get_task_comm(task_parent_name, parent_task);
 				else
 					task_parent_name[0] = '\0';
-				printk("context id=%d\t\t pid=%d\t\t %s\t\t %s\n", context->id,context->dev_priv->process_priv->pid, task_name, task_parent_name);
+				//printk("context id=%d\t\t pid=%d\t\t %s\t\t %s\n", context->id,context->dev_priv->process_priv->pid, task_name, task_parent_name);
 			}
 		}
 	}

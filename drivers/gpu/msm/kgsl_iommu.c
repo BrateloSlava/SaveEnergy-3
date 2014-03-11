@@ -32,6 +32,7 @@
 #include "kgsl_trace.h"
 #include "z180.h"
 
+int msm_unregister_domain(struct iommu_domain *domain);
 
 static struct kgsl_iommu_register_list kgsl_iommuv1_reg[KGSL_IOMMU_REG_MAX] = {
 	{ 0, 0, 0 },				
@@ -307,8 +308,10 @@ static void kgsl_iommu_destroy_pagetable(void *mmu_specific_pt)
 {
 	struct kgsl_iommu_pt *iommu_pt = mmu_specific_pt;
 	if (iommu_pt->domain)
-		iommu_domain_free(iommu_pt->domain);
+		msm_unregister_domain(iommu_pt->domain);
+
 	kfree(iommu_pt);
+	iommu_pt = NULL;
 }
 
 void *kgsl_iommu_create_pagetable(void)

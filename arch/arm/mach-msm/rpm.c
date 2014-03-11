@@ -139,8 +139,8 @@ static int msm_rpm_fill_sel_masks(
 		sel = msm_rpm_map_id_to_sel(req[i].id);
 
 		if (sel > msm_rpm_data.sel_last) {
-			pr_err("%s(): RPM ID %d not defined for target\n",
-					__func__, req[i].id);
+			/*pr_err("%s(): RPM ID %d not defined for target\n",
+					__func__, req[i].id);*/
 			return -EINVAL;
 		}
 
@@ -224,7 +224,7 @@ static void msm_rpm_err_fatal(void)
 {
 	
 	__raw_writel(0x1, msm_rpm_data.ipc_rpm_reg);
-	panic("RPM error fataled");
+	//panic("RPM error fataled");
 }
 
 static irqreturn_t msm_rpm_err_interrupt(int irq, void *dev_id)
@@ -322,9 +322,9 @@ static int msm_rpm_set_exclusive(int ctx,
 	BUG_ON(memcmp(sel_masks, sel_masks_ack, sizeof(sel_masks_ack)));
 
 	if (ctx_mask_ack & msm_rpm_get_ctx_mask(MSM_RPM_CTX_REJECTED)) {
-		pr_warn("[K] %s: following request is rejected by rpm\n", __func__);
+		//pr_warn("[K] %s: following request is rejected by rpm\n", __func__);
 		for (i = 0; i < count; i++)
-				pr_warn("[K] %s: id: %d, value: %d\n", __func__, req[i].id, req[i].value);
+				/*pr_warn("[K] %s: id: %d, value: %d\n", __func__, req[i].id, req[i].value)*/;
 		return -ENOSPC;
 	} else {
 		return 0;
@@ -398,9 +398,9 @@ static int msm_rpm_set_exclusive_noirq(int ctx,
 	BUG_ON(memcmp(sel_masks, sel_masks_ack, sizeof(sel_masks_ack)));
 
 	if (ctx_mask_ack & msm_rpm_get_ctx_mask(MSM_RPM_CTX_REJECTED)) {
-		pr_warn("[K] %s: following request is rejected by rpm\n", __func__);
+		//pr_warn("[K] %s: following request is rejected by rpm\n", __func__);
 		for (i = 0; i < count; i++)
-				pr_warn("[K] %s: id: %d, value: %d\n", __func__, req[i].id, req[i].value);
+				/*pr_warn("[K] %s: id: %d, value: %d\n", __func__, req[i].id, req[i].value)*/;
 		return -ENOSPC;
 	} else {
 		return 0;
@@ -531,8 +531,8 @@ static void msm_rpm_initialize_notification(void)
 
 void msm_rpm_print_sleep_tick(void)
 {
-	uint32_t *mpm_sleep_tick = (void *) (MSM_RPM_MPM_BASE + 0x24);
-	pr_info("MPM_SLEEP_TICK: %llums\n", ((uint64_t)(*mpm_sleep_tick) * 1000) >> 15);
+	//uint32_t *mpm_sleep_tick = (void *) (MSM_RPM_MPM_BASE + 0x24);
+	//pr_info("MPM_SLEEP_TICK: %llums\n", ((uint64_t)(*mpm_sleep_tick) * 1000) >> 15);
 }
 EXPORT_SYMBOL(msm_rpm_print_sleep_tick);
 
@@ -571,16 +571,16 @@ int msm_rpm_get_status(struct msm_rpm_iv_pair *status, int count)
 		int target_status_id;
 
 		if (status[i].id >= MSM_RPM_STATUS_ID_LAST) {
-			pr_err("%s(): Status ID beyond limits\n", __func__);
+			//pr_err("%s(): Status ID beyond limits\n", __func__);
 			rc = -EINVAL;
 			goto get_status_exit;
 		}
 
 		target_status_id = target_status(status[i].id);
 		if (target_status_id >= MSM_RPM_STATUS_ID_LAST) {
-			pr_err("%s(): Status id %d not defined for target\n",
+			/*pr_err("%s(): Status id %d not defined for target\n",
 					__func__,
-					target_status_id);
+					target_status_id);*/
 			rc = -EINVAL;
 			goto get_status_exit;
 		}
@@ -811,16 +811,16 @@ int __init msm_rpm_init(struct msm_rpm_platform_data *data)
 				target_status(MSM_RPM_STATUS_ID_VERSION_MINOR));
 	fw_build = msm_rpm_read(MSM_RPM_PAGE_STATUS,
 				target_status(MSM_RPM_STATUS_ID_VERSION_BUILD));
-	pr_info("%s: RPM firmware %u.%u.%u\n", __func__,
-			fw_major, fw_minor, fw_build);
+	/*pr_info("%s: RPM firmware %u.%u.%u\n", __func__,
+			fw_major, fw_minor, fw_build);*/
 
 	if (fw_major != msm_rpm_data.ver[0]) {
-		pr_err("%s: RPM version %u.%u.%u incompatible with "
+		/*pr_err("%s: RPM version %u.%u.%u incompatible with "
 				"this driver version %u.%u.%u\n", __func__,
 				fw_major, fw_minor, fw_build,
 				msm_rpm_data.ver[0],
 				msm_rpm_data.ver[1],
-				msm_rpm_data.ver[2]);
+				msm_rpm_data.ver[2]);*/
 		return -EFAULT;
 	}
 
@@ -835,23 +835,23 @@ int __init msm_rpm_init(struct msm_rpm_platform_data *data)
 			IRQF_TRIGGER_RISING | IRQF_NO_SUSPEND,
 			"rpm_drv", msm_rpm_ack_interrupt);
 	if (rc) {
-		pr_err("%s: failed to request irq %d: %d\n",
-			__func__, data->irq_ack, rc);
+		/*pr_err("%s: failed to request irq %d: %d\n",
+			__func__, data->irq_ack, rc);*/
 		return rc;
 	}
 
 	rc = irq_set_irq_wake(data->irq_ack, 1);
 	if (rc) {
-		pr_err("%s: failed to set wakeup irq %u: %d\n",
-			__func__, data->irq_ack, rc);
+		/*pr_err("%s: failed to set wakeup irq %u: %d\n",
+			__func__, data->irq_ack, rc);*/
 		return rc;
 	}
 
 	rc = request_irq(data->irq_err, msm_rpm_err_interrupt,
 			IRQF_TRIGGER_RISING, "rpm_err", NULL);
 	if (rc) {
-		pr_err("%s: failed to request error interrupt: %d\n",
-			__func__, rc);
+		/*pr_err("%s: failed to request error interrupt: %d\n",
+			__func__, rc);*/
 		return rc;
 	}
 
@@ -859,15 +859,15 @@ int __init msm_rpm_init(struct msm_rpm_platform_data *data)
 			msm_pm_rpm_wakeup_interrupt, IRQF_TRIGGER_RISING,
 			"pm_drv", msm_pm_rpm_wakeup_interrupt);
 	if (rc) {
-		pr_err("%s: failed to request irq %u: %d\n",
-			__func__, data->irq_wakeup, rc);
+		/*pr_err("%s: failed to request irq %u: %d\n",
+			__func__, data->irq_wakeup, rc);*/
 		return rc;
 	}
 
 	rc = irq_set_irq_wake(data->irq_wakeup, 1);
 	if (rc) {
-		pr_err("%s: failed to set wakeup irq %u: %d\n",
-			__func__, data->irq_wakeup, rc);
+		/*pr_err("%s: failed to set wakeup irq %u: %d\n",
+			__func__, data->irq_wakeup, rc);*/
 		return rc;
 	}
 
@@ -891,22 +891,22 @@ void msm_rpm_dump_stat(void)
 	int i = 0;
 
 	if (msm_rpm_stat_data) {
-		pr_info("%s: %u, %llums, %u, %llums\n", __func__,
+		/*pr_info("%s: %u, %llums, %u, %llums\n", __func__,
 			msm_rpm_stat_data->stats[RPM_STAT_XO_SHUTDOWN_COUNT].value,
 			((uint64_t)msm_rpm_stat_data->stats[RPM_STAT_XO_SHUTDOWN_TIME].value * 1000) >> 15,
 			msm_rpm_stat_data->stats[RPM_STAT_VDD_MIN_COUNT].value,
-			((uint64_t)msm_rpm_stat_data->stats[RPM_STAT_VDD_MIN_TIME].value * 1000) >> 15);
+			((uint64_t)msm_rpm_stat_data->stats[RPM_STAT_VDD_MIN_TIME].value * 1000) >> 15);*/
 		for (i = 0; i < RPM_MASTER_COUNT; i++) {
 #ifdef CONFIG_ARCH_MSM8X60
-			pr_info("sleep_info_m.%d - %llums, %llums, %d %d %d %d\n", i, ((uint64_t)msm_rpm_stat_data->wake_info[i].timestamp * 1000) >> 15,
+			/*pr_info("sleep_info_m.%d - %llums, %llums, %d %d %d %d\n", i, ((uint64_t)msm_rpm_stat_data->wake_info[i].timestamp * 1000) >> 15,
 			   ((uint64_t)msm_rpm_stat_data->sleep_info[i].timestamp * 1000) >> 15, msm_rpm_stat_data->sleep_info[i].cxo,
 			   msm_rpm_stat_data->sleep_info[i].pxo, msm_rpm_stat_data->sleep_info[i].vdd_mem,
-			   msm_rpm_stat_data->sleep_info[i].vdd_dig);
+			   msm_rpm_stat_data->sleep_info[i].vdd_dig)*/;
 #else
-			pr_info("sleep_info_m.%d - %u (%d), %llums, %d %d %d %d\n", i, msm_rpm_stat_data->sleep_info[i].count,
+			/*pr_info("sleep_info_m.%d - %u (%d), %llums, %d %d %d %d\n", i, msm_rpm_stat_data->sleep_info[i].count,
 				(msm_rpm_stat_data->sleep_info[i].stats[0] & 0x1), ((uint64_t)msm_rpm_stat_data->sleep_info[i].total_duration * 1000) >> 15,
 				((msm_rpm_stat_data->sleep_info[i].stats[0] & 0x2) >> 1), ((msm_rpm_stat_data->sleep_info[i].stats[0] & 0x4) >>2),
-				((msm_rpm_stat_data->sleep_info[i].stats[0] & 0xfffffff8) >> 3), msm_rpm_stat_data->sleep_info[i].stats[1]);
+				((msm_rpm_stat_data->sleep_info[i].stats[0] & 0xfffffff8) >> 3), msm_rpm_stat_data->sleep_info[i].stats[1])*/;
 #endif
 		}
 	}
@@ -929,11 +929,11 @@ void msm_rpm_set_suspend_flag(bool app_from_suspend)
 #ifdef CONFIG_APQ8064_ONLY 
 uint32_t htc_dump_vdd_min_time(uint32_t suspend_start, uint32_t resume_start)
 {
-	pr_info("%s: ", __func__);
+	//pr_info("%s: ", __func__);
 	if (!msm_rpm_stat_data)
 		return 0;
 
-	pr_info("core0 shutdown time=%d ticks, delta=%d ticks",
+	/*pr_info("core0 shutdown time=%d ticks, delta=%d ticks",
 		msm_rpm_stat_data->core0_shutdown_time,
 		msm_rpm_stat_data->core0_shutdown_time - suspend_start);
 	pr_info("vdd min enter time=%d ticks, delta=%d ticks",
@@ -950,7 +950,7 @@ uint32_t htc_dump_vdd_min_time(uint32_t suspend_start, uint32_t resume_start)
 		msm_rpm_stat_data->vdd_min_exit_time - msm_rpm_stat_data->sw_done_exit_time);
 	pr_info("core0 bringup time=%d ticks, delta=%d ticks",
 		msm_rpm_stat_data->core0_bringup_time,
-		msm_rpm_stat_data->core0_bringup_time - msm_rpm_stat_data->vdd_min_exit_time);
+		msm_rpm_stat_data->core0_bringup_time - msm_rpm_stat_data->vdd_min_exit_time);*/
 
 	return msm_rpm_stat_data->sw_done_exit_time;
 }

@@ -1,7 +1,7 @@
 VERSION = 3
 PATCHLEVEL = 4
 SUBLEVEL = 10
-EXTRAVERSION =
+EXTRAVERSION = .*ALINA*
 NAME = Saber-toothed Squirrel
 
 # *DOCUMENTATION*
@@ -353,13 +353,12 @@ CC		= $(srctree)/scripts/gcc-wrapper.py $(REAL_CC)
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-CFLAGS_MODULE   =
+CFLAGS_MODULE   = -Os -fno-pic -munaligned-access
 AFLAGS_MODULE   =
-LDFLAGS_MODULE  =
-CFLAGS_KERNEL	=
-AFLAGS_KERNEL	=
+LDFLAGS_MODULE  = 
+CFLAGS_KERNEL	= -marm -mcpu=cortex-a15 -mtune=cortex-a9 -ftree-vectorize -mtls-dialect=gnu2 -munaligned-access
+AFLAGS_KERNEL	= 
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
-
 
 # Use LINUXINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
@@ -565,9 +564,9 @@ endif # $(dot-config)
 all: vmlinux
 
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
-KBUILD_CFLAGS	+= -Os
+KBUILD_CFLAGS	+= -Os -falign-functions -falign-jumps -falign-loops -falign-labels -freorder-blocks
 else
-KBUILD_CFLAGS	+= -O2
+KBUILD_CFLAGS	+= -O2 -fno-reorder-blocks-and-partition -funswitch-loops -fpredictive-commoning -fgcse-after-reload -ftree-vectorize
 endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
@@ -585,18 +584,18 @@ endif
 # Use make W=1 to enable this warning (see scripts/Makefile.build)
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-but-set-variable)
 
-ifdef CONFIG_FRAME_POINTER
-KBUILD_CFLAGS	+= -fno-omit-frame-pointer -fno-optimize-sibling-calls
-else
+#ifdef CONFIG_FRAME_POINTER
+#KBUILD_CFLAGS	+= -fno-omit-frame-pointer -fno-optimize-sibling-calls
+#else
 # Some targets (ARM with Thumb2, for example), can't be built with frame
 # pointers.  For those, we don't have FUNCTION_TRACER automatically
 # select FRAME_POINTER.  However, FUNCTION_TRACER adds -pg, and this is
 # incompatible with -fomit-frame-pointer with current GCC, so we don't use
 # -fomit-frame-pointer with FUNCTION_TRACER.
-ifndef CONFIG_FUNCTION_TRACER
+#ifndef CONFIG_FUNCTION_TRACER
 KBUILD_CFLAGS	+= -fomit-frame-pointer
-endif
-endif
+#endif
+#endif
 
 ifdef CONFIG_DEBUG_INFO
 KBUILD_CFLAGS	+= -g
@@ -1170,8 +1169,8 @@ CLEAN_FILES +=	vmlinux System.map \
 
 # Directories & files removed with 'make mrproper'
 MRPROPER_DIRS  += include/config usr/include include/generated          \
-                  arch/*/include/generated
-MRPROPER_FILES += .config .config.old .version .old_version             \
+                  arch/*/include/generated zmodules_ready
+MRPROPER_FILES += .config.old .version .old_version             \
                   include/linux/version.h                               \
 		  Module.symvers tags TAGS cscope* GPATH GTAGS GRTAGS GSYMS
 

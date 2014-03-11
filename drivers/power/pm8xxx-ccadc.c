@@ -123,14 +123,14 @@ static int pm_ccadc_masked_write(struct pm8xxx_ccadc_chip *chip, u16 addr,
 
 	rc = pm8xxx_readb(chip->dev->parent, addr, &reg);
 	if (rc) {
-		pr_err("read failed addr = %03X, rc = %d\n", addr, rc);
+		//pr_err("read failed addr = %03X, rc = %d\n", addr, rc);
 		return rc;
 	}
 	reg &= ~mask;
 	reg |= val & mask;
 	rc = pm8xxx_writeb(chip->dev->parent, addr, reg);
 	if (rc) {
-		pr_err("write failed addr = %03X, rc = %d\n", addr, rc);
+		//pr_err("write failed addr = %03X, rc = %d\n", addr, rc);
 		return rc;
 	}
 	return 0;
@@ -146,7 +146,7 @@ static int calib_ccadc_enable_trim_access(struct pm8xxx_ccadc_chip *chip,
 
 	rc = pm8xxx_readb(chip->dev->parent, REG_SBI_CONFIG, sbi_config);
 	if (rc) {
-		pr_err("error = %d reading sbi config reg\n", rc);
+		//pr_err("error = %d reading sbi config reg\n", rc);
 		return rc;
 	}
 
@@ -168,13 +168,13 @@ static int calib_ccadc_enable_arbiter(struct pm8xxx_ccadc_chip *chip)
 	rc = pm_ccadc_masked_write(chip, ADC_ARB_SECP_CNTRL,
 			SEL_CCADC_BIT | EN_ARB_BIT, SEL_CCADC_BIT | EN_ARB_BIT);
 	if (rc < 0) {
-		pr_err("error = %d enabling arbiter for offset\n", rc);
+		//pr_err("error = %d enabling arbiter for offset\n", rc);
 		return rc;
 	}
 	rc = pm_ccadc_masked_write(chip, ADC_ARB_SECP_CNTRL,
 			SEL_CCADC_BIT | EN_ARB_BIT, SEL_CCADC_BIT | EN_ARB_BIT);
 	if (rc < 0) {
-		pr_err("error = %d writing ADC_ARB_SECP_CNTRL\n", rc);
+		//pr_err("error = %d writing ADC_ARB_SECP_CNTRL\n", rc);
 		return rc;
 	}
 	return 0;
@@ -190,7 +190,7 @@ static int calib_start_conv(struct pm8xxx_ccadc_chip *chip,
 	rc = pm_ccadc_masked_write(chip, ADC_ARB_SECP_CNTRL,
 					START_CONV_BIT, START_CONV_BIT);
 	if (rc < 0) {
-		pr_err("error = %d starting offset meas\n", rc);
+		//pr_err("error = %d starting offset meas\n", rc);
 		return rc;
 	}
 
@@ -199,7 +199,7 @@ static int calib_start_conv(struct pm8xxx_ccadc_chip *chip,
 		rc = pm8xxx_readb(chip->dev->parent,
 					ADC_ARB_SECP_CNTRL, &reg);
 		if (rc < 0) {
-			pr_err("error = %d read eoc for offset\n", rc);
+			//pr_err("error = %d read eoc for offset\n", rc);
 			return rc;
 		}
 		if ((reg & (START_CONV_BIT | EOC_CONV_BIT)) != EOC_CONV_BIT)
@@ -208,19 +208,19 @@ static int calib_start_conv(struct pm8xxx_ccadc_chip *chip,
 			break;
 	}
 	if (i == ADC_WAIT_COUNT) {
-		pr_err("waited too long for offset eoc returning -EBUSY\n");
+		//pr_err("waited too long for offset eoc returning -EBUSY\n");
 		return -EBUSY;
 	}
 
 	rc = pm8xxx_readb(chip->dev->parent, ADC_ARB_SECP_DATA0, &data_lsb);
 	if (rc < 0) {
-		pr_err("error = %d reading offset lsb\n", rc);
+		//pr_err("error = %d reading offset lsb\n", rc);
 		return rc;
 	}
 
 	rc = pm8xxx_readb(chip->dev->parent, ADC_ARB_SECP_DATA1, &data_msb);
 	if (rc < 0) {
-		pr_err("error = %d reading offset msb\n", rc);
+		//pr_err("error = %d reading offset msb\n", rc);
 		return rc;
 	}
 
@@ -237,12 +237,12 @@ static int calib_ccadc_read_trim(struct pm8xxx_ccadc_chip *chip,
 	calib_ccadc_enable_trim_access(chip, &sbi_config);
 	rc = pm8xxx_readb(chip->dev->parent, addr, data_msb);
 	if (rc < 0) {
-		pr_err("error = %d read msb\n", rc);
+		//pr_err("error = %d read msb\n", rc);
 		return rc;
 	}
 	rc = pm8xxx_readb(chip->dev->parent, addr + 1, data_lsb);
 	if (rc < 0) {
-		pr_err("error = %d read lsb\n", rc);
+		//pr_err("error = %d read lsb\n", rc);
 		return rc;
 	}
 	calib_ccadc_restore_trim_access(chip, sbi_config);
@@ -264,10 +264,10 @@ static void calib_ccadc_read_offset_and_gain(struct pm8xxx_ccadc_chip *chip,
 						&data_msb, &data_lsb);
 	*offset = (data_msb << 8) | data_lsb;
 
-	pr_debug("raw gain trim = 0x%x offset trim =0x%x\n", *gain, *offset);
+	//pr_debug("raw gain trim = 0x%x offset trim =0x%x\n", *gain, *offset);
 	*gain = pm8xxx_ccadc_reading_to_microvolt(chip->revision,
 							(s64)*gain - *offset);
-	pr_debug("gain uv = %duV offset=0x%x\n", *gain, *offset);
+	//pr_debug("gain uv = %duV offset=0x%x\n", *gain, *offset);
 }
 
 #define CCADC_PROGRAM_TRIM_COUNT	2
@@ -290,7 +290,7 @@ static int calib_ccadc_program_trim(struct pm8xxx_ccadc_chip *chip,
 	for (i = 0; i < loop; i++) {
 		rc = pm8xxx_readb(chip->dev->parent, ADC_ARB_BMS_CNTRL, &cntrl);
 		if (rc < 0) {
-			pr_err("error = %d reading ADC_ARB_BMS_CNTRL\n", rc);
+			//pr_err("error = %d reading ADC_ARB_BMS_CNTRL\n", rc);
 			return rc;
 		}
 
@@ -303,18 +303,18 @@ static int calib_ccadc_program_trim(struct pm8xxx_ccadc_chip *chip,
 	}
 
 	if (in_progress) {
-		pr_debug("conv in progress cannot write trim,returing EBUSY\n");
+		//pr_debug("conv in progress cannot write trim,returing EBUSY\n");
 		return -EBUSY;
 	}
 
 	rc = pm8xxx_writeb(chip->dev->parent, addr, data_msb);
 	if (rc < 0) {
-		pr_err("error = %d write msb = 0x%x\n", rc, data_msb);
+		//pr_err("error = %d write msb = 0x%x\n", rc, data_msb);
 		return rc;
 	}
 	rc = pm8xxx_writeb(chip->dev->parent, addr + 1, data_lsb);
 	if (rc < 0) {
-		pr_err("error = %d write lsb = 0x%x\n", rc, data_lsb);
+		//pr_err("error = %d write lsb = 0x%x\n", rc, data_lsb);
 		return rc;
 	}
 	calib_ccadc_restore_trim_access(chip, sbi_config);
@@ -329,27 +329,27 @@ void pm8xxx_calib_ccadc(void)
 	int i, rc;
 
 	if (!the_chip) {
-		pr_err("chip not initialized\n");
+		//pr_err("chip not initialized\n");
 		return;
 	}
 
 	rc = pm8xxx_readb(the_chip->dev->parent,
 					ADC_ARB_SECP_CNTRL, &sec_cntrl);
 	if (rc < 0) {
-		pr_err("error = %d reading ADC_ARB_SECP_CNTRL\n", rc);
+		//pr_err("error = %d reading ADC_ARB_SECP_CNTRL\n", rc);
 		return;
 	}
 
 	rc = calib_ccadc_enable_arbiter(the_chip);
 	if (rc < 0) {
-		pr_err("error = %d enabling arbiter for offset\n", rc);
+		//pr_err("error = %d enabling arbiter for offset\n", rc);
 		goto bail;
 	}
 
 	rc = pm8xxx_writeb(the_chip->dev->parent, ADC_ARB_SECP_DIG_PARAM,
 							CCADC_CALIB_DIG_PARAM);
 	if (rc < 0) {
-		pr_err("error = %d writing ADC_ARB_SECP_DIG_PARAM\n", rc);
+		//pr_err("error = %d writing ADC_ARB_SECP_DIG_PARAM\n", rc);
 		goto bail;
 	}
 
@@ -359,7 +359,7 @@ void pm8xxx_calib_ccadc(void)
 		rc = pm8xxx_writeb(the_chip->dev->parent, ADC_ARB_SECP_RSV,
 							CCADC_CALIB_RSV_GND);
 		if (rc < 0) {
-			pr_err("error = %d selecting gnd voltage\n", rc);
+			//pr_err("error = %d selecting gnd voltage\n", rc);
 			goto bail;
 		}
 
@@ -367,13 +367,13 @@ void pm8xxx_calib_ccadc(void)
 		rc = pm8xxx_writeb(the_chip->dev->parent,
 				ADC_ARB_SECP_ANA_PARAM, CCADC_CALIB_ANA_PARAM);
 		if (rc < 0) {
-			pr_err("error = %d enabling ccadc\n", rc);
+			//pr_err("error = %d enabling ccadc\n", rc);
 			goto bail;
 		}
 
 		rc = calib_start_conv(the_chip, &result);
 		if (rc < 0) {
-			pr_err("error = %d for zero volt measurement\n", rc);
+			//pr_err("error = %d for zero volt measurement\n", rc);
 			goto bail;
 		}
 
@@ -383,10 +383,10 @@ void pm8xxx_calib_ccadc(void)
 	result_offset = result_offset / SAMPLE_COUNT;
 
 
-	pr_debug("offset result_offset = 0x%x, voltage = %llduV\n",
+	/*pr_debug("offset result_offset = 0x%x, voltage = %llduV\n",
 			result_offset,
 			pm8xxx_ccadc_reading_to_microvolt(the_chip->revision,
-			((s64)result_offset - CCADC_INTRINSIC_OFFSET)));
+			((s64)result_offset - CCADC_INTRINSIC_OFFSET)));*/
 
 	the_chip->ccadc_offset = result_offset;
 	data_msb = the_chip->ccadc_offset >> 8;
@@ -395,22 +395,22 @@ void pm8xxx_calib_ccadc(void)
 	rc = calib_ccadc_program_trim(the_chip, CCADC_OFFSET_TRIM1,
 						data_msb, data_lsb, 1);
 	if (rc) {
-		pr_debug("error = %d programming offset trim 0x%02x 0x%02x\n",
-					rc, data_msb, data_lsb);
+		/*pr_debug("error = %d programming offset trim 0x%02x 0x%02x\n",
+					rc, data_msb, data_lsb);*/
 		
 		enable_irq(the_chip->eoc_irq);
 	}
 
 	rc = calib_ccadc_enable_arbiter(the_chip);
 	if (rc < 0) {
-		pr_err("error = %d enabling arbiter for gain\n", rc);
+		//pr_err("error = %d enabling arbiter for gain\n", rc);
 		goto bail;
 	}
 
 	rc = pm8xxx_writeb(the_chip->dev->parent, ADC_ARB_SECP_DIG_PARAM,
 							CCADC_CALIB_DIG_PARAM);
 	if (rc < 0) {
-		pr_err("error = %d enabling decimation ration for gain\n", rc);
+		//pr_err("error = %d enabling decimation ration for gain\n", rc);
 		goto bail;
 	}
 
@@ -419,7 +419,7 @@ void pm8xxx_calib_ccadc(void)
 		rc = pm8xxx_writeb(the_chip->dev->parent,
 					ADC_ARB_SECP_RSV, CCADC_CALIB_RSV_25MV);
 		if (rc < 0) {
-			pr_err("error = %d selecting 25mV for gain\n", rc);
+			//pr_err("error = %d selecting 25mV for gain\n", rc);
 			goto bail;
 		}
 
@@ -427,13 +427,13 @@ void pm8xxx_calib_ccadc(void)
 		rc = pm8xxx_writeb(the_chip->dev->parent,
 			ADC_ARB_SECP_ANA_PARAM, CCADC_CALIB_ANA_PARAM);
 		if (rc < 0) {
-			pr_err("error = %d enabling ccadc\n", rc);
+			//pr_err("error = %d enabling ccadc\n", rc);
 			goto bail;
 		}
 
 		rc = calib_start_conv(the_chip, &result);
 		if (rc < 0) {
-			pr_err("error = %d for adc reading 25mV\n", rc);
+			//pr_err("error = %d for adc reading 25mV\n", rc);
 			goto bail;
 		}
 
@@ -445,15 +445,15 @@ void pm8xxx_calib_ccadc(void)
 				the_chip->revision,
 				((s64)result_gain - result_offset));
 
-	pr_debug("gain result_gain = 0x%x, voltage = %d microVolts\n",
-					result_gain, the_chip->ccadc_gain_uv);
+	/*pr_debug("gain result_gain = 0x%x, voltage = %d microVolts\n",
+					result_gain, the_chip->ccadc_gain_uv);*/
 
 	data_msb = result_gain >> 8;
 	data_lsb = result_gain;
 	rc = calib_ccadc_program_trim(the_chip, CCADC_FULLSCALE_TRIM1,
 						data_msb, data_lsb, 0);
 	if (rc)
-		pr_debug("error = %d programming gain trim\n", rc);
+		/*pr_debug("error = %d programming gain trim\n", rc)*/;
 bail:
 	pm8xxx_writeb(the_chip->dev->parent, ADC_ARB_SECP_CNTRL, sec_cntrl);
 }
@@ -479,7 +479,7 @@ static irqreturn_t pm8921_bms_ccadc_eoc_handler(int irq, void *data)
 	if (!the_chip)
 		goto out;
 
-	pr_debug("irq = %d triggered\n", irq);
+	//pr_debug("irq = %d triggered\n", irq);
 	data_msb = chip->ccadc_offset >> 8;
 	data_lsb = chip->ccadc_offset;
 
@@ -502,49 +502,49 @@ static int ccadc_get_rsense_voltage(int *voltage_uv)
 
 	rc = calib_ccadc_enable_arbiter(the_chip);
 	if (rc < 0) {
-		pr_err("error = %d enabling arbiter for offset\n", rc);
+		//pr_err("error = %d enabling arbiter for offset\n", rc);
 		return rc;
 	}
 
 	rc = pm8xxx_writeb(the_chip->dev->parent, ADC_ARB_SECP_DIG_PARAM,
 							CCADC_IBAT_DIG_PARAM);
 	if (rc < 0) {
-		pr_err("error = %d writing ADC_ARB_SECP_DIG_PARAM\n", rc);
+		//pr_err("error = %d writing ADC_ARB_SECP_DIG_PARAM\n", rc);
 		return rc;
 	}
 
 	rc = pm8xxx_writeb(the_chip->dev->parent, ADC_ARB_SECP_RSV,
 						CCADC_IBAT_RSV);
 	if (rc < 0) {
-		pr_err("error = %d selecting rsense\n", rc);
+		//pr_err("error = %d selecting rsense\n", rc);
 		return rc;
 	}
 
 	rc = pm8xxx_writeb(the_chip->dev->parent,
 			ADC_ARB_SECP_ANA_PARAM, CCADC_IBAT_ANA_PARAM);
 	if (rc < 0) {
-		pr_err("error = %d enabling ccadc\n", rc);
+		//pr_err("error = %d enabling ccadc\n", rc);
 		return rc;
 	}
 
 	rc = calib_start_conv(the_chip, &raw);
 	if (rc < 0) {
-		pr_err("error = %d for zero volt measurement\n", rc);
+		//pr_err("error = %d for zero volt measurement\n", rc);
 		return rc;
 	}
 
-	pr_debug("Vsense raw = 0x%x\n", raw);
+	//pr_debug("Vsense raw = 0x%x\n", raw);
 	result = cc_adjust_for_offset(raw);
-	pr_debug("Vsense after offset raw = 0x%x offset=0x%x\n",
+	/*pr_debug("Vsense after offset raw = 0x%x offset=0x%x\n",
 					result,
-					the_chip->ccadc_offset);
+					the_chip->ccadc_offset);*/
 	*voltage_uv = pm8xxx_ccadc_reading_to_microvolt(the_chip->revision,
 			((s64)result));
-	pr_debug("Vsense before gain of %d = %d uV\n", the_chip->ccadc_gain_uv,
-					*voltage_uv);
+	/*pr_debug("Vsense before gain of %d = %d uV\n", the_chip->ccadc_gain_uv,
+					*voltage_uv);*/
 	*voltage_uv = pm8xxx_cc_adjust_for_gain(*voltage_uv);
 
-	pr_debug("Vsense = %d uV\n", *voltage_uv);
+	//pr_debug("Vsense = %d uV\n", *voltage_uv);
 	return 0;
 }
 
@@ -554,13 +554,13 @@ int pm8xxx_ccadc_get_battery_current(int *bat_current_ua)
 
 	rc = ccadc_get_rsense_voltage(&voltage_uv);
 	if (rc) {
-		pr_err("cant get voltage across rsense rc = %d\n", rc);
+		//pr_err("cant get voltage across rsense rc = %d\n", rc);
 		return rc;
 	}
 
 	*bat_current_ua = voltage_uv * 1000/the_chip->r_sense;
 	*bat_current_ua = -1 * (*bat_current_ua);
-	pr_debug("bat current = %d ma\n", *bat_current_ua);
+	//pr_debug("bat current = %d ma\n", *bat_current_ua);
 	return 0;
 }
 EXPORT_SYMBOL(pm8xxx_ccadc_get_battery_current);
@@ -573,8 +573,8 @@ static int get_reg(void *data, u64 * val)
 
 	ret = pm8xxx_readb(the_chip->dev->parent, addr, &temp);
 	if (ret) {
-		pr_err("pm8xxx_readb to %x value = %d errored = %d\n",
-			addr, temp, ret);
+		/*pr_err("pm8xxx_readb to %x value = %d errored = %d\n",
+			addr, temp, ret);*/
 		return -EAGAIN;
 	}
 	*val = temp;
@@ -590,8 +590,8 @@ static int set_reg(void *data, u64 val)
 	temp = (u8) val;
 	ret = pm8xxx_writeb(the_chip->dev->parent, addr, temp);
 	if (ret) {
-		pr_err("pm8xxx_writeb to %x value = %d errored = %d\n",
-			addr, temp, ret);
+		/*pr_err("pm8xxx_writeb to %x value = %d errored = %d\n",
+			addr, temp, ret);*/
 		return -EAGAIN;
 	}
 	return 0;
@@ -636,15 +636,15 @@ void dump_all(void)
 
 	
 	if(BATT_LOG_BUF_LEN - len <= 1)
-		pr_info("batt log length maybe out of buffer range!!!");
+		/*pr_info("batt log length maybe out of buffer range!!!")*/;
 
-	pr_info("%s\n", batt_log_buf);
+	//pr_info("%s\n", batt_log_buf);
 }
 
 inline int pm8xxx_ccadc_dump_all(void)
 {
 	if (!the_chip) {
-		pr_err("called before init\n");
+		//pr_err("called before init\n");
 		return -EINVAL;
 	}
 	dump_all();
@@ -694,7 +694,7 @@ static void create_debugfs_entries(struct pm8xxx_ccadc_chip *chip)
 	chip->dent = debugfs_create_dir("pm8xxx-ccadc", NULL);
 
 	if (IS_ERR(chip->dent)) {
-		pr_err("ccadc couldnt create debugfs dir\n");
+		//pr_err("ccadc couldnt create debugfs dir\n");
 		return;
 	}
 
@@ -730,7 +730,7 @@ static int __devinit pm8xxx_ccadc_probe(struct platform_device *pdev)
 				= pdev->dev.platform_data;
 
 	if (!pdata) {
-		pr_err("missing platform data\n");
+		//pr_err("missing platform data\n");
 		return -EINVAL;
 	}
 	res = platform_get_resource_byname(pdev, IORESOURCE_IRQ,
@@ -742,14 +742,14 @@ static int __devinit pm8xxx_ccadc_probe(struct platform_device *pdev)
 
 	chip = kzalloc(sizeof(struct pm8xxx_ccadc_chip), GFP_KERNEL);
 	if (!chip) {
-		pr_err("Cannot allocate pm_bms_chip\n");
+		//pr_err("Cannot allocate pm_bms_chip\n");
 		return -ENOMEM;
 	}
 	chip->dev = &pdev->dev;
 	chip->revision = pm8xxx_get_revision(chip->dev->parent);
 	chip->eoc_irq = res->start;
 	chip->r_sense = pdata->r_sense;
-	pr_info("r_sense=%u\n", chip->r_sense);
+	//pr_info("r_sense=%u\n", chip->r_sense);
 	chip->calib_delay_ms = pdata->calib_delay_ms;
 
 	calib_ccadc_read_offset_and_gain(chip,
@@ -759,7 +759,7 @@ static int __devinit pm8xxx_ccadc_probe(struct platform_device *pdev)
 			pm8921_bms_ccadc_eoc_handler, IRQF_TRIGGER_RISING,
 			"bms_eoc_ccadc", chip);
 	if (rc) {
-		pr_err("failed to request %d irq rc= %d\n", chip->eoc_irq, rc);
+		//pr_err("failed to request %d irq rc= %d\n", chip->eoc_irq, rc);
 		goto free_chip;
 	}
 

@@ -275,7 +275,7 @@ static ssize_t htc_battery_set_full_level(struct device *dev,
 		return -EINVAL;
 
 	if (!battery_core_info.func.func_set_full_level) {
-		BATT_ERR("No set full level function!");
+		//BATT_ERR("No set full level function!");
 		return -ENOENT;
 	}
 
@@ -289,12 +289,12 @@ int htc_battery_charger_disable()
 	int rc = 0;
 
 	if (!battery_core_info.func.func_charger_control) {
-		BATT_ERR("No charger control function!");
+		//BATT_ERR("No charger control function!");
 		return -ENOENT;
 	}
 	rc = battery_core_info.func.func_charger_control(STOP_CHARGER);
 	if (rc < 0)
-		BATT_ERR("charger control failed!");
+		/*BATT_ERR("charger control failed!")*/;
 
 	return rc;
 }
@@ -305,12 +305,12 @@ int htc_battery_set_max_input_current(int target_ma)
 	int rc = 0;
 
 	if (!battery_core_info.func.func_set_max_input_current) {
-		BATT_ERR("No max input current function!");
+		//BATT_ERR("No max input current function!");
 		return -ENOENT;
 	}
 	rc = battery_core_info.func.func_set_max_input_current(target_ma);
 	if (rc < 0)
-		BATT_ERR("max input current control failed!");
+		/*BATT_ERR("max input current control failed!")*/;
 
 	return rc;
 }
@@ -320,12 +320,12 @@ int htc_battery_pwrsrc_disable()
 	int rc = 0;
 
 	if (!battery_core_info.func.func_charger_control) {
-		BATT_ERR("No charger control function!");
+		//BATT_ERR("No charger control function!");
 		return -ENOENT;
 	}
 	rc = battery_core_info.func.func_charger_control(DISABLE_PWRSRC);
 	if (rc < 0)
-		BATT_ERR("charger control failed!");
+		/*BATT_ERR("charger control failed!")*/;
 
 	return rc;
 }
@@ -352,18 +352,18 @@ static ssize_t htc_battery_charger_switch(struct device *dev,
 	if (rc)
 		return rc;
 
-	BATT_LOG("Set charger_control:%lu", enable);
+	//BATT_LOG("Set charger_control:%lu", enable);
 	if (enable >= END_CHARGER)
 		return -EINVAL;
 
 	if (!battery_core_info.func.func_charger_control) {
-		BATT_ERR("No charger control function!");
+		//BATT_ERR("No charger control function!");
 		return -ENOENT;
 	}
 
 	rc = battery_core_info.func.func_charger_control(enable);
 	if (rc < 0) {
-		BATT_ERR("charger control failed!");
+		//BATT_ERR("charger control failed!");
 		return rc;
 	}
 	charger_ctrl_stat = enable;
@@ -395,10 +395,10 @@ static ssize_t htc_battery_set_phone_call(struct device *dev,
 	if (rc)
 		return rc;
 
-	BATT_LOG("set context phone_call=%lu", phone_call);
+	//BATT_LOG("set context phone_call=%lu", phone_call);
 
 	if (!battery_core_info.func.func_context_event_handler) {
-		BATT_ERR("No context_event_notify function!");
+		//BATT_ERR("No context_event_notify function!");
 		return -ENOENT;
 	}
 
@@ -422,10 +422,10 @@ static ssize_t htc_battery_set_network_search(struct device *dev,
 	if (rc)
 		return rc;
 
-	BATT_LOG("Set context network_search=%lu", network_search);
+	//BATT_LOG("Set context network_search=%lu", network_search);
 
 	if (!battery_core_info.func.func_context_event_handler) {
-		BATT_ERR("No context_event_notify function!");
+		//BATT_ERR("No context_event_notify function!");
 		return -ENOENT;
 	}
 
@@ -450,10 +450,10 @@ static ssize_t htc_battery_set_navigation(struct device *dev,
 	if (rc)
 		return rc;
 
-	BATT_LOG("Set context navigation=%lu", navigation);
+	//BATT_LOG("Set context navigation=%lu", navigation);
 
 	if (!battery_core_info.func.func_context_event_handler) {
-		BATT_ERR("No context_event_notify function!");
+		//BATT_ERR("No context_event_notify function!");
 		return -ENOENT;
 	}
 
@@ -478,10 +478,10 @@ static ssize_t htc_battery_set_context_event(struct device *dev,
 	if (rc)
 		return rc;
 
-	BATT_LOG("Set context event = %lu", event);
+	//BATT_LOG("Set context event = %lu", event);
 
 	if (!battery_core_info.func.func_context_event_handler) {
-		BATT_ERR("No context_event_notify function!");
+		//BATT_ERR("No context_event_notify function!");
 		return -ENOENT;
 	}
 
@@ -722,8 +722,8 @@ static ssize_t htc_battery_show_property(struct device *dev,
 	mutex_unlock(&battery_core_info.info_lock);
 
 	if (i < 0)
-		BATT_ERR("%s: battery: attribute is not supported: %d",
-			__func__, off);
+		/*BATT_ERR("%s: battery: attribute is not supported: %d",
+			__func__, off)*/;
 
 	return i;
 }
@@ -738,13 +738,13 @@ static ssize_t htc_battery_rt_attr_show(struct device *dev,
 	const ptrdiff_t attr_index = attr - htc_battery_rt_attrs;
 
 	if (!battery_core_info.func.func_get_batt_rt_attr) {
-		BATT_ERR("%s: func_get_batt_rt_attr does not exist", __func__);
+		//BATT_ERR("%s: func_get_batt_rt_attr does not exist", __func__);
 		return -EINVAL;
 	}
 
 	rc = battery_core_info.func.func_get_batt_rt_attr(attr_index, &val);
 	if (rc) {
-		BATT_ERR("%s: get_batt_rt_attrs[%d] failed", __func__, attr_index);
+		//BATT_ERR("%s: get_batt_rt_attrs[%d] failed", __func__, attr_index);
 		return -EINVAL;
 	}
 
@@ -771,7 +771,7 @@ static ssize_t htc_battery_charger_ctrl_timer(struct device *dev,
 	if (time_out > 0) {
 		rc = battery_core_info.func.func_charger_control(STOP_CHARGER);
 		if (rc < 0) {
-			BATT_ERR("charger control failed!");
+			//BATT_ERR("charger control failed!");
 			return rc;
 		}
 		interval = ktime_set(time_out, 0);
@@ -783,7 +783,7 @@ static ssize_t htc_battery_charger_ctrl_timer(struct device *dev,
 		rc = battery_core_info.func.func_charger_control(
 							ENABLE_CHARGER);
 		if (rc < 0) {
-			BATT_ERR("charger control failed!");
+			//BATT_ERR("charger control failed!");
 			return rc;
 		}
 		alarm_cancel(&batt_charger_ctrl_alarm);
@@ -799,7 +799,7 @@ static void batt_charger_ctrl_func(struct work_struct *work)
 
 	rc = battery_core_info.func.func_charger_control(ENABLE_CHARGER);
 	if (rc) {
-		BATT_ERR("charger control failed!");
+		//BATT_ERR("charger control failed!");
 		return;
 	}
 
@@ -808,7 +808,7 @@ static void batt_charger_ctrl_func(struct work_struct *work)
 
 static void batt_charger_ctrl_alarm_handler(struct alarm *alarm)
 {
-	BATT_LOG("charger control alarm is timeout.");
+	//BATT_LOG("charger control alarm is timeout.");
 
 	queue_work(batt_charger_ctrl_wq, &batt_charger_ctrl_work);
 }
@@ -823,7 +823,7 @@ int htc_battery_core_update_changed(void)
 	static int batt_temp_over_68c_count = 0;
 
 	if (battery_register) {
-		BATT_ERR("No battery driver exists.");
+		//BATT_ERR("No battery driver exists.");
 		return -1;
 	}
 
@@ -833,7 +833,7 @@ int htc_battery_core_update_changed(void)
 	if (battery_core_info.func.func_get_battery_info) {
 		battery_core_info.func.func_get_battery_info(&new_batt_info_rep);
 	} else {
-		BATT_ERR("no func_get_battery_info hooked.");
+		//BATT_ERR("no func_get_battery_info hooked.");
 		return -EINVAL;
 	}
 
@@ -885,8 +885,8 @@ int htc_battery_core_update_changed(void)
 	if (battery_core_info.rep.batt_temp > 680) {
 		batt_temp_over_68c_count++;
 		if (batt_temp_over_68c_count < 3) {
-			pr_info("[BATT] batt_temp_over_68c_count=%d, (temp=%d)\n",
-					batt_temp_over_68c_count, battery_core_info.rep.batt_temp);
+			/*pr_info("[BATT] batt_temp_over_68c_count=%d, (temp=%d)\n",
+					batt_temp_over_68c_count, battery_core_info.rep.batt_temp);*/
 			battery_core_info.rep.batt_temp = 680;
 		}
 	} else {
@@ -896,7 +896,7 @@ int htc_battery_core_update_changed(void)
 
 	
 	if (test_power_monitor) {
-		BATT_LOG("test_power_monitor is set: overwrite fake batt info.");
+		//BATT_LOG("test_power_monitor is set: overwrite fake batt info.");
 		battery_core_info.rep.batt_id = 77;
 		battery_core_info.rep.batt_temp = 330;
 		battery_core_info.rep.level = 77;
@@ -905,7 +905,7 @@ int htc_battery_core_update_changed(void)
 
 	if (battery_core_info.rep.charging_source <= 0) {
 		if (battery_core_info.rep.batt_id == 255) {
-			pr_info("[BATT] Ignore invalid id when no charging_source");
+			//pr_info("[BATT] Ignore invalid id when no charging_source");
 			battery_core_info.rep.batt_id = 66;
 		}
 	}
@@ -953,7 +953,7 @@ int htc_battery_core_update_changed(void)
 	battery_core_info.update_time = jiffies;
 	mutex_unlock(&battery_core_info.info_lock);
 
-	BATT_LOG("ID=%d,level=%d,level_raw=%d,vol=%d,temp=%d,current=%d,"
+	/*BATT_LOG("ID=%d,level=%d,level_raw=%d,vol=%d,temp=%d,current=%d,"
 		"chg_src=%d,chg_en=%d,full_bat=%d,over_vchg=%d,"
 		"batt_state=%d,overload=%d,ui_chg_full=%d",
 			battery_core_info.rep.batt_id,
@@ -968,25 +968,25 @@ int htc_battery_core_update_changed(void)
 			battery_core_info.rep.over_vchg,
 			battery_core_info.rep.batt_state,
 			battery_core_info.rep.overload,
-			battery_core_info.htc_charge_full);
+			battery_core_info.htc_charge_full);*/
 
 
 	
 	if (is_send_batt_uevent) {
 		power_supply_changed(&htc_power_supplies[BATTERY_SUPPLY]);
-		BATT_LOG("power_supply_changed: battery");
+		//BATT_LOG("power_supply_changed: battery");
 	}
 	if (is_send_usb_uevent) {
 		power_supply_changed(&htc_power_supplies[USB_SUPPLY]);
-		BATT_LOG("power_supply_changed: usb");
+		//BATT_LOG("power_supply_changed: usb");
 	}
 	if (is_send_ac_uevent) {
 		power_supply_changed(&htc_power_supplies[AC_SUPPLY]);
-		BATT_LOG("power_supply_changed: ac");
+		//BATT_LOG("power_supply_changed: ac");
 	}
 	if (is_send_wireless_charger_uevent) {
 		power_supply_changed(&htc_power_supplies[WIRELESS_SUPPLY]);
-		BATT_LOG("power_supply_changed: wireless");
+		//BATT_LOG("power_supply_changed: wireless");
 	}
 
 	return 0;
@@ -999,7 +999,7 @@ int htc_battery_core_register(struct device *dev,
 	int i, rc = 0;
 
 	if (!battery_register) {
-		BATT_ERR("Only one battery driver could exist.");
+		//BATT_ERR("Only one battery driver could exist.");
 		return -1;
 	}
 	battery_register = 0;
@@ -1044,8 +1044,8 @@ int htc_battery_core_register(struct device *dev,
 	for (i = 0; i < ARRAY_SIZE(htc_power_supplies); i++) {
 		rc = power_supply_register(dev, &htc_power_supplies[i]);
 		if (rc)
-			BATT_ERR("Failed to register power supply"
-				" (%d)\n", rc);
+			/*BATT_ERR("Failed to register power supply"
+				" (%d)\n", rc)*/;
 	}
 
 	

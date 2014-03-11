@@ -128,6 +128,7 @@ struct msm_spm_platform_data {
 int msm_spm_set_low_power_mode(unsigned int mode, bool notify_rpm);
 
 int msm_spm_set_vdd(unsigned int cpu, unsigned int vlevel);
+unsigned int msm_spm_get_vdd(unsigned int cpu);
 
 int msm_spm_turn_on_cpu_rail(unsigned int cpu);
 
@@ -187,6 +188,11 @@ static inline int msm_spm_set_low_power_mode(unsigned int mode, bool notify_rpm)
 static inline int msm_spm_set_vdd(unsigned int cpu, unsigned int vlevel)
 {
 	return -ENOSYS;
+}
+
+static inline unsigned int msm_spm_get_vdd(unsigned int cpu)
+{
+	return 0;
 }
 
 static inline void msm_spm_reinit(void)

@@ -276,7 +276,7 @@ static void rpm_regulator_req(struct vreg *vreg, int set)
 				 vreg->req[1].value);
 
 	pos += scnprintf(buf + pos, buflen - pos, "\n");
-	printk(buf);
+	//printk(buf);
 }
 
 static void rpm_regulator_vote(struct vreg *vreg, enum rpm_vreg_voter voter,
@@ -287,9 +287,9 @@ static void rpm_regulator_vote(struct vreg *vreg, enum rpm_vreg_voter voter,
 	    && vreg_id_is_vdd_mem_or_dig(vreg->id))
 		return;
 
-	pr_info("vote received %-9s: voter=%d, set=%c, v_voter=%7d uV, "
+	/*pr_info("vote received %-9s: voter=%d, set=%c, v_voter=%7d uV, "
 		"v_aggregate=%7d uV\n", vreg->rdesc.name, voter,
-		(set == 0 ? 'A' : 'S'), voter_uV, aggregate_uV);
+		(set == 0 ? 'A' : 'S'), voter_uV, aggregate_uV);*/
 }
 
 static void rpm_regulator_duplicate(struct vreg *vreg, int set, int cnt)
@@ -300,15 +300,15 @@ static void rpm_regulator_duplicate(struct vreg *vreg, int set, int cnt)
 		return;
 
 	if (cnt == 2)
-		pr_info("ignored request %-9s: set=%c; req[0]={%d, 0x%08X}, "
+		/*pr_info("ignored request %-9s: set=%c; req[0]={%d, 0x%08X}, "
 			"req[1]={%d, 0x%08X}\n", vreg->rdesc.name,
 			(set == 0 ? 'A' : 'S'),
 			vreg->req[0].id, vreg->req[0].value,
-			vreg->req[1].id, vreg->req[1].value);
+			vreg->req[1].id, vreg->req[1].value)*/;
 	else if (cnt == 1)
-		pr_info("ignored request %-9s: set=%c; req[0]={%d, 0x%08X}\n",
+		/*pr_info("ignored request %-9s: set=%c; req[0]={%d, 0x%08X}\n",
 			vreg->rdesc.name, (set == 0 ? 'A' : 'S'),
-			vreg->req[0].id, vreg->req[0].value);
+			vreg->req[0].id, vreg->req[0].value)*/;
 }
 
 static bool requires_tcxo_workaround;
@@ -555,12 +555,12 @@ int rpm_vreg_set_voltage(int vreg_id, enum rpm_vreg_voter voter, int min_uV,
 	int lim_min_uV, lim_max_uV, i, rc;
 
 	if (!config) {
-		pr_err("rpm-regulator driver has not probed yet.\n");
+		//pr_err("rpm-regulator driver has not probed yet.\n");
 		return -ENODEV;
 	}
 
 	if (vreg_id < config->vreg_id_min || vreg_id > config->vreg_id_max) {
-		pr_err("invalid regulator id=%d\n", vreg_id);
+		//pr_err("invalid regulator id=%d\n", vreg_id);
 		return -EINVAL;
 	}
 
@@ -643,12 +643,12 @@ int rpm_vreg_set_frequency(int vreg_id, enum rpm_vreg_freq freq)
 	int rc;
 
 	if (!config) {
-		pr_err("rpm-regulator driver has not probed yet.\n");
+		//pr_err("rpm-regulator driver has not probed yet.\n");
 		return -ENODEV;
 	}
 
 	if (vreg_id < config->vreg_id_min || vreg_id > config->vreg_id_max) {
-		pr_err("invalid regulator id=%d\n", vreg_id);
+		//pr_err("invalid regulator id=%d\n", vreg_id);
 		return -EINVAL;
 	}
 
@@ -688,17 +688,17 @@ struct rpm_regulator *rpm_regulator_get(struct device *dev, const char *supply)
 	int i;
 
 	if (!config) {
-		pr_err("rpm-regulator driver has not probed yet.\n");
+		//pr_err("rpm-regulator driver has not probed yet.\n");
 		return ERR_PTR(-ENODEV);
 	}
 
 	if (consumer_map == NULL || consumer_map_len == 0) {
-		pr_err("No private consumer mapping has been specified.\n");
+		//pr_err("No private consumer mapping has been specified.\n");
 		return ERR_PTR(-ENODEV);
 	}
 
 	if (supply == NULL) {
-		pr_err("supply name must be specified\n");
+		//pr_err("supply name must be specified\n");
 		return ERR_PTR(-EINVAL);
 	}
 
@@ -720,14 +720,14 @@ struct rpm_regulator *rpm_regulator_get(struct device *dev, const char *supply)
 	}
 
 	if (mapping == NULL) {
-		pr_err("could not find mapping for dev=%s, supply=%s\n",
-			(devname ? devname : "(null)"), supply);
+		/*pr_err("could not find mapping for dev=%s, supply=%s\n",
+			(devname ? devname : "(null)"), supply);*/
 		return ERR_PTR(-ENODEV);
 	}
 
 	regulator = kzalloc(sizeof(struct rpm_regulator), GFP_KERNEL);
 	if (regulator == NULL) {
-		pr_err("could not allocate memory for regulator\n");
+		//pr_err("could not allocate memory for regulator\n");
 		return ERR_PTR(-ENOMEM);
 	}
 
@@ -745,10 +745,10 @@ static int rpm_regulator_check_input(struct rpm_regulator *regulator)
 
 	if (regulator == NULL) {
 		rc = -EINVAL;
-		pr_err("invalid (null) rpm_regulator pointer\n");
+		//pr_err("invalid (null) rpm_regulator pointer\n");
 	} else if (IS_ERR(regulator)) {
 		rc = PTR_ERR(regulator);
-		pr_err("invalid rpm_regulator pointer, rc=%d\n", rc);
+		//pr_err("invalid rpm_regulator pointer, rc=%d\n", rc);
 	}
 
 	return rc;
@@ -770,7 +770,7 @@ int rpm_regulator_enable(struct rpm_regulator *regulator)
 
 	if (regulator->vreg_id < config->vreg_id_min
 			|| regulator->vreg_id > config->vreg_id_max) {
-		pr_err("invalid regulator id=%d\n", regulator->vreg_id);
+		//pr_err("invalid regulator id=%d\n", regulator->vreg_id);
 		return -EINVAL;
 	}
 
@@ -783,9 +783,9 @@ int rpm_regulator_enable(struct rpm_regulator *regulator)
 	}
 
 	if (regulator->min_uV == 0 && regulator->max_uV == 0) {
-		pr_err("Voltage must be set with rpm_regulator_set_voltage "
+		/*pr_err("Voltage must be set with rpm_regulator_set_voltage "
 			"before calling rpm_regulator_enable; vreg_id=%d, "
-			"voter=%d\n", regulator->vreg_id, regulator->voter);
+			"voter=%d\n", regulator->vreg_id, regulator->voter);*/
 		return -EINVAL;
 	}
 
@@ -793,7 +793,7 @@ int rpm_regulator_enable(struct rpm_regulator *regulator)
 		regulator->min_uV, regulator->max_uV, regulator->sleep_also);
 
 	if (rc)
-		pr_err("rpm_vreg_set_voltage failed, rc=%d\n", rc);
+		/*pr_err("rpm_vreg_set_voltage failed, rc=%d\n", rc)*/;
 
 	return rc;
 }
@@ -810,7 +810,7 @@ int rpm_regulator_disable(struct rpm_regulator *regulator)
 				  regulator->sleep_also);
 
 	if (rc)
-		pr_err("rpm_vreg_set_voltage failed, rc=%d\n", rc);
+		/*pr_err("rpm_vreg_set_voltage failed, rc=%d\n", rc)*/;
 
 	return rc;
 }
@@ -828,7 +828,7 @@ int rpm_regulator_set_voltage(struct rpm_regulator *regulator, int min_uV,
 				 max_uV, regulator->sleep_also);
 
 	if (rc) {
-		pr_err("rpm_vreg_set_voltage failed, rc=%d\n", rc);
+		/*pr_err("rpm_vreg_set_voltage failed, rc=%d\n", rc)*/;
 	} else {
 		regulator->min_uV = min_uV;
 		regulator->max_uV = max_uV;
@@ -1466,13 +1466,13 @@ rpm_vreg_init_regulator(const struct rpm_regulator_init_data *pdata,
 	int rc = 0;
 
 	if (!pdata) {
-		pr_err("platform data missing\n");
+		//pr_err("platform data missing\n");
 		return -EINVAL;
 	}
 
 	vreg = rpm_vreg_get_vreg(pdata->id);
 	if (!vreg) {
-		pr_err("invalid regulator id: %d\n", pdata->id);
+		//pr_err("invalid regulator id: %d\n", pdata->id);
 		return -ENODEV;
 	}
 
@@ -1482,8 +1482,8 @@ rpm_vreg_init_regulator(const struct rpm_regulator_init_data *pdata,
 		rdesc = &vreg->rdesc_pc;
 
 	if (vreg->type < 0 || vreg->type > RPM_REGULATOR_TYPE_MAX) {
-		pr_err("%s: invalid regulator type: %d\n",
-			vreg->rdesc.name, vreg->type);
+		/*pr_err("%s: invalid regulator type: %d\n",
+			vreg->rdesc.name, vreg->type);*/
 		return -EINVAL;
 	}
 
@@ -1533,8 +1533,8 @@ rpm_vreg_init_regulator(const struct rpm_regulator_init_data *pdata,
 		if ((pdata->pin_ctrl & RPM_VREG_PIN_CTRL_ALL)
 		      == RPM_VREG_PIN_CTRL_NONE
 		    && pdata->pin_fn != config->pin_func_sleep_b) {
-			pr_err("%s: no pin control input specified\n",
-				vreg->rdesc.name);
+			/*pr_err("%s: no pin control input specified\n",
+				vreg->rdesc.name);*/
 			mutex_unlock(&vreg->pc_lock);
 			return -EINVAL;
 		}
@@ -1559,8 +1559,8 @@ rpm_vreg_init_regulator(const struct rpm_regulator_init_data *pdata,
 	rdev = regulator_register(rdesc, dev, &(pdata->init_data), vreg, NULL);
 	if (IS_ERR(rdev)) {
 		rc = PTR_ERR(rdev);
-		pr_err("regulator_register failed: %s, rc=%d\n",
-			vreg->rdesc.name, rc);
+		/*pr_err("regulator_register failed: %s, rc=%d\n",
+			vreg->rdesc.name, rc);*/
 		return rc;
 	} else {
 		if (config->is_real_id(pdata->id))
@@ -1571,7 +1571,7 @@ rpm_vreg_init_regulator(const struct rpm_regulator_init_data *pdata,
 
 bail:
 	if (rc)
-		pr_err("error for %s, rc=%d\n", vreg->rdesc.name, rc);
+		/*pr_err("error for %s, rc=%d\n", vreg->rdesc.name, rc)*/;
 
 	return rc;
 }
@@ -1608,20 +1608,20 @@ static int __devinit rpm_vreg_probe(struct platform_device *pdev)
 
 	platform_data = pdev->dev.platform_data;
 	if (!platform_data) {
-		pr_err("rpm-regulator requires platform data\n");
+		//pr_err("rpm-regulator requires platform data\n");
 		return -EINVAL;
 	}
 
 	if (rpm_version >= 0 && rpm_version <= RPM_VREG_VERSION_MAX
 	    && platform_data->version != rpm_version) {
-		pr_err("rpm version %d does not match previous version %d\n",
-			platform_data->version, rpm_version);
+		/*pr_err("rpm version %d does not match previous version %d\n",
+			platform_data->version, rpm_version);*/
 		return -EINVAL;
 	}
 
 	if (platform_data->version < 0
 		|| platform_data->version > RPM_VREG_VERSION_MAX) {
-		pr_err("rpm version %d is invalid\n", platform_data->version);
+		//pr_err("rpm version %d is invalid\n", platform_data->version);
 		return -EINVAL;
 	}
 
@@ -1631,8 +1631,8 @@ static int __devinit rpm_vreg_probe(struct platform_device *pdev)
 		vreg_id_vdd_mem = platform_data->vreg_id_vdd_mem;
 		vreg_id_vdd_dig = platform_data->vreg_id_vdd_dig;
 		if (!config) {
-			pr_err("rpm version %d is not available\n",
-				platform_data->version);
+			/*pr_err("rpm version %d is not available\n",
+				platform_data->version);*/
 			return -ENODEV;
 		}
 		if (config->use_legacy_optimum_mode)
@@ -1653,7 +1653,7 @@ static int __devinit rpm_vreg_probe(struct platform_device *pdev)
 				sizeof(struct rpm_regulator_consumer_mapping)
 				* consumer_map_len, GFP_KERNEL);
 			if (consumer_map == NULL) {
-				pr_err("memory allocation failed\n");
+				//pr_err("memory allocation failed\n");
 				consumer_map_len = 0;
 				return -ENOMEM;
 			}
@@ -1666,7 +1666,7 @@ static int __devinit rpm_vreg_probe(struct platform_device *pdev)
 				sizeof(struct rpm_regulator_consumer_mapping)
 				* consumer_map_len, GFP_KERNEL);
 			if (consumer_map == NULL) {
-				pr_err("memory allocation failed\n");
+				//pr_err("memory allocation failed\n");
 				consumer_map_len = 0;
 				return -ENOMEM;
 			}
@@ -1705,7 +1705,7 @@ static int __devinit rpm_vreg_probe(struct platform_device *pdev)
 		rc = rpm_vreg_init_regulator(&platform_data->init_data[i],
 			&pdev->dev);
 		if (rc) {
-			pr_err("rpm_vreg_init_regulator failed, rc=%d\n", rc);
+			//pr_err("rpm_vreg_init_regulator failed, rc=%d\n", rc);
 			goto remove_regulators;
 		}
 	}

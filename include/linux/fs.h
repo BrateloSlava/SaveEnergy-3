@@ -1202,6 +1202,10 @@ struct super_block {
 
 	
 	int s_readonly_remount;
+#ifdef CONFIG_ASYNC_FSYNC
+#define FLAG_ASYNC_FSYNC        0x1
+	unsigned int fsync_flags;
+#endif
 };
 
 extern void prune_icache_sb(struct super_block *sb, int nr_to_scan);
@@ -1716,6 +1720,7 @@ static inline int thaw_bdev(struct block_device *bdev, struct super_block *sb)
 }
 #endif
 extern int sync_filesystem(struct super_block *);
+extern void sync_filesystems(int wait);
 extern const struct file_operations def_blk_fops;
 extern const struct file_operations def_chr_fops;
 extern const struct file_operations bad_sock_fops;

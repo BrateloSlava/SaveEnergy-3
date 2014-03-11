@@ -633,7 +633,7 @@ static void perf_acpu_table_fixup(void)
 			perf_acpu_table[i] = policy_min * 1000;
 	}
 
-#ifdef PERFLOCK_FIX_UP
+#ifdef CONFIG_PERFLOCK_FIX_UP
 	if (table_size >= 1)
 		if (perf_acpu_table[table_size - 1] < policy_max * 1000)
 			perf_acpu_table[table_size - 1] = policy_max * 1000;

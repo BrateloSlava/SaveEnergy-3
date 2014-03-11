@@ -132,12 +132,15 @@ extern unsigned int kobjsize(const void *objp);
 
 extern pgprot_t protection_map[16];
 
-#define FAULT_FLAG_WRITE	0x01	
-#define FAULT_FLAG_NONLINEAR	0x02	
-#define FAULT_FLAG_MKWRITE	0x04	
-#define FAULT_FLAG_ALLOW_RETRY	0x08	
-#define FAULT_FLAG_RETRY_NOWAIT	0x10	
-#define FAULT_FLAG_KILLABLE	0x20	
+#define FAULT_FLAG_WRITE	0x01	/* Fault was a write access */
+#define FAULT_FLAG_NONLINEAR	0x02	/* Fault was via a nonlinear mapping */
+#define FAULT_FLAG_MKWRITE	0x04	/* Fault was mkwrite of existing pte */
+#define FAULT_FLAG_ALLOW_RETRY	0x08	/* Retry fault if blocking */
+#define FAULT_FLAG_RETRY_NOWAIT	0x10	/* Don't drop mmap_sem and wait when retrying */
+#define FAULT_FLAG_KILLABLE	0x20	/* The fault task is in SIGKILL killable region */
+#ifdef CONFIG_ZSWAP
+#define FAULT_FLAG_TRIED	0x40	/* second try */
+#endif
 
 static inline int is_linear_pfn_mapping(struct vm_area_struct *vma)
 {
@@ -1130,8 +1133,8 @@ extern int filemap_fault(struct vm_area_struct *, struct vm_fault *);
 int write_one_page(struct page *page, int wait);
 void task_dirty_inc(struct task_struct *tsk);
 
-#define VM_MAX_READAHEAD	128	
-#define VM_MIN_READAHEAD	16	
+#define VM_MAX_READAHEAD	4096
+#define VM_MIN_READAHEAD	1024
 
 int force_page_cache_readahead(struct address_space *mapping, struct file *filp,
 			pgoff_t offset, unsigned long nr_to_read);

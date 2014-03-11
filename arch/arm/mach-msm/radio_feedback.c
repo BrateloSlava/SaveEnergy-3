@@ -148,7 +148,7 @@ static long radio_feedback_ioctl(struct file *file, unsigned int cmd,
 		
 		memcpy(&config.max_size, (void *)(radio_feedback_addr + 0x308), 4);
 #endif
-		printk("start addr: 0x%x, max_size: 0x%x\n", config.start_addr, config.max_size);
+		//printk("start addr: 0x%x, max_size: 0x%x\n", config.start_addr, config.max_size);
 		if(copy_to_user((void *)arg, &config, sizeof(config)))
 			rc = -EFAULT;
 		break;
@@ -195,7 +195,7 @@ static int __init radio_feedback_init(void)
 	int ret;
 	ret = misc_register(&radio_feedback_misc);
 	if (ret < 0) {
-		pr_err("failed to register misc device!\n");
+		//pr_err("failed to register misc device!\n");
 		return ret;
 	}
 	mutex_init(&radio_feedback_lock);
@@ -207,7 +207,7 @@ static void __exit radio_feedback_exit(void)
 	int ret;
 	ret = misc_deregister(&radio_feedback_misc);
 	if (ret < 0)
-		pr_err("failed to unregister misc device!\n");
+		/*pr_err("failed to unregister misc device!\n")*/;
 }
 
 module_init(radio_feedback_init);

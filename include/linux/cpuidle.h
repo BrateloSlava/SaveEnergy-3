@@ -31,6 +31,7 @@ struct cpuidle_driver;
 struct cpuidle_state_usage {
 	void		*driver_data;
 
+	unsigned long long	disable;
 	unsigned long long	usage;
 	unsigned long long	time; 
 };
@@ -104,7 +105,9 @@ struct cpuidle_driver {
 
 	unsigned int		power_specified:1;
 	
+	/* set to 1 to use the core cpuidle time keeping (for all states). */
 	unsigned int		en_core_tk_irqen:1;
+	/* states array must be ordered in decreasing power consumption */
 	struct cpuidle_state	states[CPUIDLE_STATE_MAX];
 	int			state_count;
 	int			safe_state_index;
@@ -118,7 +121,9 @@ struct cpuidle_driver *cpuidle_get_driver(void);
 extern void cpuidle_unregister_driver(struct cpuidle_driver *drv);
 extern int cpuidle_register_device(struct cpuidle_device *dev);
 extern void cpuidle_unregister_device(struct cpuidle_device *dev);
-
+extern int cpuidle_register(struct cpuidle_driver *drv,
+			    const struct cpumask *const coupled_cpus);
+extern void cpuidle_unregister(struct cpuidle_driver *drv);
 extern void cpuidle_pause_and_lock(void);
 extern void cpuidle_resume_and_unlock(void);
 extern int cpuidle_enable_device(struct cpuidle_device *dev);
@@ -139,7 +144,10 @@ static inline void cpuidle_unregister_driver(struct cpuidle_driver *drv) { }
 static inline int cpuidle_register_device(struct cpuidle_device *dev)
 {return -ENODEV; }
 static inline void cpuidle_unregister_device(struct cpuidle_device *dev) { }
-
+static inline int cpuidle_register(struct cpuidle_driver *drv,
+				   const struct cpumask *const coupled_cpus)
+{return -ENODEV; }
+static inline void cpuidle_unregister(struct cpuidle_driver *drv) { }
 static inline void cpuidle_pause_and_lock(void) { }
 static inline void cpuidle_resume_and_unlock(void) { }
 static inline int cpuidle_enable_device(struct cpuidle_device *dev)

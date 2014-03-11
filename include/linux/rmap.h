@@ -11,6 +11,9 @@ struct anon_vma {
 	struct anon_vma *root;	
 	struct mutex mutex;	
 	atomic_t refcount;
+#ifdef CONFIG_ZSWAP
+	atomic_t swapra_miss;
+#endif
 
 	/*
 	 * NOTE: the LSB of the head.next is set by

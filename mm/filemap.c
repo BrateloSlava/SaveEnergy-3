@@ -1171,10 +1171,22 @@ int filemap_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 		return VM_FAULT_SIGBUS;
 
 	page = find_get_page(mapping, offset);
+#ifdef CONFIG_ZSWAP
+	if (likely(page) && !(vmf->flags & FAULT_FLAG_TRIED)) {
+#else
 	if (likely(page)) {
+#endif
+		/*
+		 * We found the page, so try async readahead before
+		 * waiting for the lock.
+		 */
 		do_async_mmap_readahead(vma, ra, file, page, offset);
+#ifdef CONFIG_ZSWAP
+	} else if (!page) {
+#else
 	} else {
-		
+#endif
+		/* No page in the page cache at all */
 		do_sync_mmap_readahead(vma, ra, file, offset);
 		count_vm_event(PGMAJFAULT);
 		mem_cgroup_count_vm_event(vma->vm_mm, PGMAJFAULT);

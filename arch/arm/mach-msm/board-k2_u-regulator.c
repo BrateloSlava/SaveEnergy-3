@@ -440,10 +440,18 @@ msm8930_gpio_regulator_pdata[] __devinitdata = {
 };
 
 struct regulator_init_data msm8930_saw_regulator_core0_pdata =
-	
+#if defined(CONFIG_CPU_OVERCLOCK) || defined(CONFIG_CPU_MAX_OVERCLOCK)
 	SAW_VREG_INIT(S5, "8038_s5",	       850000, 1300000);
+#else
+	SAW_VREG_INIT(S5, "8038_s5",	       750000, 1250000);
+#endif
+
 struct regulator_init_data msm8930_saw_regulator_core1_pdata =
+#if defined(CONFIG_CPU_OVERCLOCK) || defined(CONFIG_CPU_MAX_OVERCLOCK)
 	SAW_VREG_INIT(S6, "8038_s6",	       850000, 1300000);
+#else
+	SAW_VREG_INIT(S6, "8038_s6",	       750000, 1250000);
+#endif
 
 struct pm8xxx_regulator_platform_data
 msm8930_pm8038_regulator_pdata[] __devinitdata = {

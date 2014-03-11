@@ -174,7 +174,9 @@ int force_page_cache_readahead(struct address_space *mapping, struct file *filp,
 	while (nr_to_read) {
 		int err;
 
-		unsigned long this_chunk = (2 * 1024 * 1024) / PAGE_CACHE_SIZE;
+		//unsigned long this_chunk = (2 * 1024 * 1024) / PAGE_CACHE_SIZE;
+		unsigned long this_chunk = 2097152 / PAGE_CACHE_SIZE;
+
 
 		if (this_chunk > nr_to_read)
 			this_chunk = nr_to_read;
@@ -212,7 +214,7 @@ static unsigned long get_init_ra_size(unsigned long size, unsigned long max)
 {
 	unsigned long newsize = roundup_pow_of_two(size);
 
-	if (newsize <= max / 32)
+	if (newsize <= 1)
 		newsize = newsize * 4;
 	else if (newsize <= max / 4)
 		newsize = newsize * 2;
@@ -260,15 +262,19 @@ static int try_context_readahead(struct address_space *mapping,
 
 	size = count_history_pages(mapping, ra, offset, max);
 
-	if (!size)
+	/*
+	 * not enough history pages:
+	 * it could be a random read
+	 */
+	if (size <= req_size)
 		return 0;
 
 	if (size >= offset)
 		size *= 2;
 
 	ra->start = offset;
-	ra->size = get_init_ra_size(size + req_size, max);
-	ra->async_size = ra->size;
+	ra->size = min(size + req_size, max);
+	ra->async_size = 1;
 
 	return 1;
 }

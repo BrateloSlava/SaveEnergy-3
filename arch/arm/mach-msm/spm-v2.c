@@ -175,7 +175,7 @@ static inline uint32_t msm_spm_drv_get_sts_pmic_state(
 	}
 }
 
-static inline uint32_t msm_spm_drv_get_sts_curr_pmic_data(
+uint32_t msm_spm_drv_get_sts_curr_pmic_data(
 		struct msm_spm_driver_data *dev)
 {
 	if (dev->major == SAW2_MAJOR_2) {
@@ -301,12 +301,62 @@ int msm_spm_drv_set_low_power_mode(struct msm_spm_driver_data *dev,
 	return 0;
 }
 
+#ifdef CONFIG_MSM_AVS_HW
+static bool msm_spm_drv_is_avs_enabled(struct msm_spm_driver_data *dev)
+{
+	msm_spm_drv_load_shadow(dev, MSM_SPM_REG_SAW2_AVS_CTL);
+	if (dev->major == SAW2_MAJOR_2)
+		return dev->reg_shadow[MSM_SPM_REG_SAW2_AVS_CTL] & BIT(0);
+	else
+		return dev->reg_shadow[MSM_SPM_REG_SAW2_AVS_CTL] & BIT(27);
+}
+
+static void msm_spm_drv_disable_avs(struct msm_spm_driver_data *dev)
+{
+	msm_spm_drv_load_shadow(dev, MSM_SPM_REG_SAW2_AVS_CTL);
+	dev->reg_shadow[MSM_SPM_REG_SAW2_AVS_CTL] &= ~BIT(27);
+	msm_spm_drv_flush_shadow(dev, MSM_SPM_REG_SAW2_AVS_CTL);
+}
+
+static void msm_spm_drv_enable_avs(struct msm_spm_driver_data *dev)
+{
+	dev->reg_shadow[MSM_SPM_REG_SAW2_AVS_CTL] |= BIT(27);
+	msm_spm_drv_flush_shadow(dev, MSM_SPM_REG_SAW2_AVS_CTL);
+}
+
+static void msm_spm_drv_set_avs_vlevel(struct msm_spm_driver_data *dev,
+		unsigned int vlevel)
+{
+	vlevel &= 0x3f;
+	dev->reg_shadow[MSM_SPM_REG_SAW2_AVS_CTL] &= ~0x7efc00;
+	dev->reg_shadow[MSM_SPM_REG_SAW2_AVS_CTL] |= ((vlevel - 4) << 10);
+	dev->reg_shadow[MSM_SPM_REG_SAW2_AVS_CTL] |= (vlevel << 17);
+	msm_spm_drv_flush_shadow(dev, MSM_SPM_REG_SAW2_AVS_CTL);
+}
+
+#else
+static bool msm_spm_drv_is_avs_enabled(struct msm_spm_driver_data *dev)
+{
+	return false;
+}
+
+static void msm_spm_drv_disable_avs(struct msm_spm_driver_data *dev) { }
+
+static void msm_spm_drv_enable_avs(struct msm_spm_driver_data *dev) { }
+
+static void msm_spm_drv_set_avs_vlevel(struct msm_spm_driver_data *dev,
+		unsigned int vlevel) { }
+#endif
+
 int msm_spm_drv_set_vdd(struct msm_spm_driver_data *dev, unsigned int vlevel)
 {
 	uint32_t timeout_us;
+	bool avs_enabled;
 
 	if (!dev)
 		return -EINVAL;
+
+	avs_enabled  = msm_spm_drv_is_avs_enabled(dev);
 
 	if (!msm_spm_pmic_arb_present(dev))
 		return -ENOSYS;
@@ -314,6 +364,9 @@ int msm_spm_drv_set_vdd(struct msm_spm_driver_data *dev, unsigned int vlevel)
 	if (msm_spm_debug_mask & MSM_SPM_DEBUG_VCTL)
 		pr_info("%s: requesting vlevel 0x%x\n",
 			__func__, vlevel);
+
+	if (avs_enabled)
+		msm_spm_drv_disable_avs(dev);
 
 	msm_spm_drv_apcs_set_vctl(dev, vlevel);
 	msm_spm_drv_flush_shadow(dev, MSM_SPM_REG_SAW2_VCTL);
@@ -343,9 +396,17 @@ int msm_spm_drv_set_vdd(struct msm_spm_driver_data *dev, unsigned int vlevel)
 		pr_info("%s: done, remaining timeout %uus\n",
 			__func__, timeout_us);
 
+	if (avs_enabled) {
+		msm_spm_drv_set_avs_vlevel(dev, vlevel);
+		msm_spm_drv_enable_avs(dev);
+	}
+
 	return 0;
 
 set_vdd_bail:
+	if (avs_enabled)
+		msm_spm_drv_enable_avs(dev);
+
 	pr_err("%s: failed, remaining timeout %uus, vlevel 0x%x\n",
 	       __func__, timeout_us, msm_spm_drv_get_sts_curr_pmic_data(dev));
 	return -EIO;

@@ -43,7 +43,6 @@
 #include <linux/msm_thermal.h>
 #include <linux/htc_flashlight.h>
 #include <linux/synaptics_i2c_rmi.h>
-
 #include <linux/akm8975.h>
 #include <linux/bma250.h>
 #include <linux/cm3629.h>
@@ -828,7 +827,7 @@ static struct sf_lut pc_sf_id_1 = {
 static struct pc_temp_ocv_lut  pc_temp_ocv_id_1 = {
 	.rows	= 29,
 	.cols		= 6,
-	.temp	= {-20, -10, 0, 25, 40, 60},
+	.temp		= {-20, -10, 0, 25, 40, 60},
 	.percent	= {100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0},
 	.ocv		= {
 				{4300, 4300, 4300, 4300, 4300, 4300},
@@ -2684,7 +2683,11 @@ static struct platform_device msm_tsens_device = {
 static struct msm_thermal_data msm_thermal_pdata = {
 	.sensor_id = 9,
 	.poll_ms = 250,
-	.limit_temp_degC = 60,
+#ifdef CONFIG_CPU_MAX_OVERCLOCK
+        .limit_temp_degC = 70,
+#else
+        .limit_temp_degC = 60,
+#endif
 	.temp_hysteresis_degC = 10,
 	.freq_step = 2,
 };
@@ -3394,7 +3397,7 @@ static void __init k2_u_init(void)
 	msm_pm_init_sleep_status_data(&msm_pm_slp_sts_data);
 
 #ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
-	set_two_phase_freq(1026000);
+	set_two_phase_freq(918000);
 #endif
 
 	k2_u_init_keypad();

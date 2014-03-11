@@ -34,7 +34,6 @@ config ARCH_MSM7X27
 	select MULTI_IRQ_HANDLER
 	select MSM_PROC_COMM_REGULATOR
 	select CLEANCACHE
-	select QCACHE
 	select MSM_PM2 if PM
 	select MSM_RUN_QUEUE_STATS if MSM_SOC_REV_A
 	select DONT_MAP_HOLE_AFTER_MEMBANK0
@@ -138,7 +137,6 @@ config ARCH_MSM8960
 	select COMPACTION
 	select MIGRATION
 	select CLEANCACHE
-	select QCACHE
 	select MSM_MULTIMEDIA_USE_ION
 	select MULTI_IRQ_HANDLER
 	select MSM_PM8X60 if PM
@@ -202,7 +200,6 @@ config ARCH_APQ8064
 	select CPU_HAS_L2_PMU
 	select HOLES_IN_ZONE if SPARSEMEM
 	select CLEANCACHE
-	select QCACHE
 	select MIGHT_HAVE_PCI
 	select ARCH_SUPPORTS_MSI
 	select ARM_HAS_SG_CHAIN
@@ -231,7 +228,6 @@ config ARCH_APQ8064_M7
 	select CPU_HAS_L2_PMU
 	select HOLES_IN_ZONE if SPARSEMEM
 	select CLEANCACHE
-	select QCACHE
 	select MIGHT_HAVE_PCI
 	select ARCH_SUPPORTS_MSI
 	select ARM_HAS_SG_CHAIN
@@ -451,7 +447,7 @@ config  ARCH_MSM_KRAITMP
 	select HAVE_ARCH_HAS_CURRENT_TIMER
 	select MSM_JTAG if MSM_QDSS
 	bool
-	select HAVE_HW_BRKPT_RESERVED_RW_ACCESS
+#	select HAVE_HW_BRKPT_RESERVED_RW_ACCESS
 
 config  ARCH_MSM_CORTEXMP
 	select MSM_SMP
@@ -462,7 +458,7 @@ config  MSM_KRAIT_WFE_FIXUP
 
 config  ARCH_MSM_CORTEX_A5
 	bool
-	select HAVE_HW_BRKPT_RESERVED_RW_ACCESS
+#	select HAVE_HW_BRKPT_RESERVED_RW_ACCESS
 
 config ARCH_MSM7X27A
 	bool
@@ -1743,25 +1739,50 @@ config MSM_CPU_FREQ_SET_MIN_MAX
 config MSM_CPU_FREQ_MAX
 	int "Max CPU Frequency"
 	depends on MSM_CPU_FREQ_SET_MIN_MAX
-	default 384000
+	default 1188000
 
 config MSM_CPU_FREQ_MIN
 	int "Min CPU Frequency"
 	depends on MSM_CPU_FREQ_SET_MIN_MAX
-	default 245760
+	default 162000
 
 endif # CPU_FREQ_MSM
 
-config MSM_CPU_AVS
-	bool "Enable software controlled Adaptive Voltage Scaling (AVS)"
-	depends on (ARCH_MSM_SCORPION && QSD_SVS)
-	depends on ARCH_QSD8X50
+config USERSPACE_VOLTAGE_CONTROL
+	bool "Enable Userspace CPU Voltage Control"
 	default n
-	select MSM_AVS_HW
 	help
-	  This enables the s/w control of Adaptive Voltage Scaling feature
-	  in Qualcomm ARMv7 CPUs. It adjusts the voltage for each frequency
-	  based on feedback from three ring oscillators in the CPU.
+	  Userspace Voltage Control
+
+config LOW_CPUCLOCKS
+	bool "Enable ultra low CPU clocks"
+	default n
+	help
+	  Ultra low cpu frequencies enabled for CPU and L2 Cache
+
+config CPU_OVERCLOCK
+        bool "Enable CPU Overclocking option 1.458 GHz"
+        default n
+        help
+          Qualcomm overclocking up to 1.458 GHz
+
+config GPU_OVERCLOCK
+        bool "Enable GPU Overclocking option 450 MHz"
+        default n
+        help
+          Qualcomm GPU overclocking to 450 MHz
+
+config CPU_MAX_OVERCLOCK
+        bool "Enable CPU Overclocking option 1.674 GHz"
+        default n
+        help
+          Qualcomm overclocking up to 1.674 GHz
+
+config GPU_MAX_OVERCLOCK
+        bool "Enable GPU Overclocking option 487.5 MHz"
+        default n
+        help
+          Qualcomm GPU overclocking to 487.5 MHz
 
 config MSM_AVS_HW
 	bool "Enable Adaptive Voltage Scaling (AVS)"
@@ -2386,6 +2407,9 @@ config MSM_STANDALONE_POWER_COLLAPSE
        bool "Enable standalone power collapse"
        default n
 
+config SLEEPY_PLUG
+	bool "sleepy_plug by rmbq"
+	default n
 config MSM_GSBI9_UART
 	bool "Enable GSBI9 UART device"
 	default n
@@ -2867,5 +2891,31 @@ config QUALCOMM_WLAN_PXO
 	bool "Use PXO for WLAN clock source"
 	help
 	  Use PXO for clock source of WLAN chip
+
+config UPDATE_LCDC_LUT
+	default y
+	bool "enable LCDC LUT"
+	help
+	  enable LCDC LUT
+
+config FORCE_FAST_CHARGE
+	bool "Force AC charge mode at will"
+	default y
+	help
+	  A simple sysfs interface to force adapters that
+	  are detected as USB to charge as AC.
+
+config UPDATE_LCDC_LUT
+        bool "Set initial Qualcomm LCDC lut"
+        default n
+        help
+          Set initial Qualcomm LCDC Look Up Table.
+
+config LCD_KCAL
+        tristate "MSM generic LCDC Calibration"
+        default n
+        help
+          Enable MSM generic LCDC temperature Calibration.
+
 endif
 

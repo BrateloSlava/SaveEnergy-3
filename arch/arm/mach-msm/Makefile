@@ -6,7 +6,6 @@ obj-y += timer.o
 endif
 obj-y += clock.o clock-voter.o clock-dummy.o
 obj-y += modem_notifier.o subsystem_map.o
-obj-$(CONFIG_CPU_FREQ_MSM) += cpufreq.o
 obj-$(CONFIG_DEBUG_FS) += nohlt.o clock-debug.o
 obj-$(CONFIG_KEXEC) += msm_kexec.o
 
@@ -49,8 +48,7 @@ else
 endif
 obj-$(CONFIG_HOTPLUG_CPU) += hotplug.o
 
-obj-$(CONFIG_MSM_CPU_AVS) += avs.o
-obj-$(CONFIG_MSM_AVS_HW) += avs_hw.o
+obj-$(CONFIG_MSM_AVS_HW) += avs.o
 obj-$(CONFIG_CPU_V6) += idle-v6.o
 obj-$(CONFIG_CPU_V7) += idle-v7.o
 obj-$(CONFIG_MSM_JTAG) += jtag.o
@@ -537,6 +535,7 @@ obj-$(CONFIG_ARCH_MSM9625) += gpiomux-v2.o gpiomux.o
 obj-$(CONFIG_MSM_SLEEP_STATS) += idle_stats.o
 obj-$(CONFIG_MSM_SLEEP_STATS_DEVICE) += idle_stats_device.o
 obj-$(CONFIG_MSM_DCVS) += msm_dcvs_scm.o msm_dcvs.o msm_dcvs_idle.o
+obj-$(CONFIG_SLEEPY_PLUG) += sleepy_plug.o
 obj-$(CONFIG_MSM_RUN_QUEUE_STATS) += msm_rq_stats.o
 obj-$(CONFIG_MSM_SHOW_RESUME_IRQ) += msm_show_resume_irq.o
 obj-$(CONFIG_BT_MSM_PINTEST)  += btpintest.o
@@ -580,3 +579,7 @@ obj-$(CONFIG_IO_FOOTPRINT) += io_footprint.o
 
 #PWR2_ADD, @CPU Sniffer: CPU usage statistics.
 obj-y += htc_cpu_usage_stats.o
+obj-$(CONFIG_FORCE_FAST_CHARGE) += fastchg.o
+obj-$(CONFIG_LCD_KCAL) += msm_kcal_ctrl.o
+
+obj-$(CONFIG_CPU_FREQ_MSM) += cpufreq.o

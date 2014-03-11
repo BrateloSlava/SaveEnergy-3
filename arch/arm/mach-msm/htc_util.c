@@ -210,13 +210,13 @@ void htc_idle_stat_show(u32 total_time)
 	u32 idle_time = 0;
 	total_time *= 1000;
 
-	printk("[K] cpu_id\tcpu_state\tidle_count\tidle_time\n");
+	//printk("[K] cpu_id\tcpu_state\tidle_count\tidle_time\n");
 	for (cpu = 0; cpu < CONFIG_NR_CPUS; cpu++) {
 		for (i = 0; i < 3 ; i++) {
 			if (htc_idle_Stat[cpu][i].count) {
 				idle_time += htc_idle_Stat[cpu][i].time;
-				printk("[K]\t%d\tC%d\t\t%d\t\t%dms\n"
-					,cpu , i, htc_idle_Stat[cpu][i].count, htc_idle_Stat[cpu][i].time / 1000);
+				/*printk("[K]\t%d\tC%d\t\t%d\t\t%dms\n"
+					,cpu , i, htc_idle_Stat[cpu][i].count, htc_idle_Stat[cpu][i].time / 1000);*/
 			}
 		}
 	}
@@ -274,12 +274,12 @@ void htc_xo_vddmin_stat_show(void)
 	uint64_t vddmin_time = 0;
 	if (htc_get_xo_vdd_min_info(&xo_count, &xo_time, &vddmin_count, &vddmin_time)) {
 		if (xo_count > previous_xo_count) {
-			printk("[K] XO: %u, %llums\n", xo_count-previous_xo_count, xo_time-previous_xo_time);
+			//printk("[K] XO: %u, %llums\n", xo_count-previous_xo_count, xo_time-previous_xo_time);
 			previous_xo_count = xo_count;
 			previous_xo_time = xo_time;
 		}
 		if (vddmin_count > previous_vddmin_count) {
-			printk("[K] Vdd-min: %u, %llums\n", vddmin_count-previous_vddmin_count, vddmin_time-previous_vddmin_time);
+			//printk("[K] Vdd-min: %u, %llums\n", vddmin_count-previous_vddmin_count, vddmin_time-previous_vddmin_time);
 			previous_vddmin_count = vddmin_count;
 			previous_vddmin_time = vddmin_time;
 		}
@@ -289,7 +289,7 @@ void htc_xo_vddmin_stat_show(void)
 void htc_print_vddmin_gpio_status(void)
 {
 	if (system_rev == XB || system_rev == XC)
-		printk(KERN_INFO "[K] AP2MDM_VDDMIN: %d, MDM2AP_VDDMIN: %d. \n", gpio_get_value(AP2MDM_VDDMIN), gpio_get_value(MDM2AP_VDDMIN));
+		/*printk(KERN_INFO "[K] AP2MDM_VDDMIN: %d, MDM2AP_VDDMIN: %d. \n", gpio_get_value(AP2MDM_VDDMIN), gpio_get_value(MDM2AP_VDDMIN))*/;
 }
 
 void htc_pm_monitor_work(struct work_struct *work)
@@ -298,14 +298,14 @@ void htc_pm_monitor_work(struct work_struct *work)
 	struct rtc_time tm;
 
 	if (htc_pm_monitor_wq == NULL){
-		printk(KERN_INFO "[K] hTc PM Statistic is NILL.\n");
+		//printk(KERN_INFO "[K] hTc PM Statistic is NILL.\n");
 		return;
 	}
 
 	getnstimeofday(&ts);
 	rtc_time_to_tm(ts.tv_sec - (sys_tz.tz_minuteswest * 60), &tm);
-	printk("[K] [PM] hTC PM Statistic start (%02d-%02d %02d:%02d:%02d) \n",
-		tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+	/*printk("[K] [PM] hTC PM Statistic start (%02d-%02d %02d:%02d:%02d) \n",
+		tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);*/
 
 	htc_show_interrupts();
 	htc_xo_block_clks_count_show();
@@ -326,7 +326,7 @@ void htc_pm_monitor_work(struct work_struct *work)
 
 	queue_delayed_work(htc_pm_monitor_wq, &htc_pm_delayed_work, msecs_to_jiffies(msm_htc_util_delay_time));
 	htc_kernel_top();
-	printk("[K] [PM] hTC PM Statistic done\n");
+	//printk("[K] [PM] hTC PM Statistic done\n");
 }
 
 void htc_kernel_top_accumulation_monitor_work(struct work_struct *work)
@@ -336,15 +336,15 @@ void htc_kernel_top_accumulation_monitor_work(struct work_struct *work)
 
 	if (htc_kernel_top_monitor_wq == NULL){
 		if (pm_monitor_enabled)
-			printk(KERN_INFO "[K] hTc Kernel Top statistic is NILL.\n");
+			/*printk(KERN_INFO "[K] hTc Kernel Top statistic is NILL.\n")*/;
 		return;
 	}
 
 	getnstimeofday(&ts);
 	rtc_time_to_tm(ts.tv_sec - (sys_tz.tz_minuteswest * 60), &tm);
 	if (pm_monitor_enabled)
-		printk("[K] [KTOP] hTC Kernel Top Statistic start (%02d-%02d %02d:%02d:%02d) \n",
-			tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+		/*printk("[K] [KTOP] hTC Kernel Top Statistic start (%02d-%02d %02d:%02d:%02d) \n",
+			tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec)*/;
 
 	if (!pm_monitor_enabled) {
 		htc_show_interrupts();
@@ -354,7 +354,7 @@ void htc_kernel_top_accumulation_monitor_work(struct work_struct *work)
 	queue_delayed_work(htc_kernel_top_monitor_wq, &htc_kernel_top_delayed_work, msecs_to_jiffies(msm_htc_util_top_delay_time));
 	htc_kernel_top_accumulation();
 	if (pm_monitor_enabled)
-		printk("[K] [KTOP] hTC Kernel Top Statistic done\n");
+		/*printk("[K] [KTOP] hTC Kernel Top Statistic done\n")*/;
 } 
 
 static u32 full_loading_counter = 0;
@@ -518,8 +518,8 @@ int htc_kernel_top_statistics_continuous_3(unsigned long delta_time, int *ptr_to
                     if ((process_monitor_continuous_3_array[j].cnt >= MAX_CONSECUTIVE_THRES_TIMES) && (!process_monitor_continuous_3_array[j].set_warn))
                     {
                         process_monitor_continuous_3_array[j].set_warn = 1;
-                        printk(KERN_ERR "[K] CPU_Sniffer: PID=[%d], name=[%s], over-cpu-usage-threshold.\n", 
-                            process_monitor_continuous_3_array[j].pid, process_monitor_continuous_3_array[j].ppid_name);
+                        /*printk(KERN_ERR "[K] CPU_Sniffer: PID=[%d], name=[%s], over-cpu-usage-threshold.\n", 
+                            process_monitor_continuous_3_array[j].pid, process_monitor_continuous_3_array[j].ppid_name);*/
                     }
                     break;
                 }
@@ -663,8 +663,8 @@ int htc_kernel_top_statistics_5_in_10(unsigned long delta_time, int *ptr_top_loa
                 strcat(buf_warn, buf_temp);
                 strcat(buf_warn, ",0,0,0;");
 #endif 
-                printk(KERN_ERR "[K] CPU_Sniffer: PID=[%d], name=[%s], over-cpu-usage-threshold.\n", 
-                    process_monitor_5_in_10_array[j].pid, process_monitor_5_in_10_array[j].ppid_name);
+                /*printk(KERN_ERR "[K] CPU_Sniffer: PID=[%d], name=[%s], over-cpu-usage-threshold.\n", 
+                    process_monitor_5_in_10_array[j].pid, process_monitor_5_in_10_array[j].ppid_name);*/
 #if SEND_KOBJECT_UEVENT_ENV_ENABLED
                 process_monitor_5_in_10_array[j].sent_uevent = 1;
                 ok_to_send_uevent++;
@@ -685,7 +685,7 @@ int htc_kernel_top_statistics_5_in_10(unsigned long delta_time, int *ptr_top_loa
 #endif 
 
         if (pm_monitor_enabled)
-            printk("[K] [KTOP] Reach the number of statistics monitor period.\n");
+            /*printk("[K] [KTOP] Reach the number of statistics monitor period.\n")*/;
         statistic_monitor_period = 1;
         clear_process_monitor_array(&process_monitor_5_in_10_array[0], SIZE_OF_PROCESS_MONITOR_5_IN_10_ARRAY);
     }
@@ -764,13 +764,13 @@ void htc_kernel_top(void)
 		 dump_top_stack = 1;
 
 	
-	printk(KERN_INFO "[K] CPU Usage\t\tPID\t\tName\n");
+	//printk(KERN_INFO "[K] CPU Usage\t\tPID\t\tName\n");
 	for (i = 0 ; i < NUM_BUSY_THREAD_CHECK ; i++) {
-		printk(KERN_INFO "[K] %8lu%%\t\t%d\t\t%s\t\t%d\n",
+		/*printk(KERN_INFO "[K] %8lu%%\t\t%d\t\t%s\t\t%d\n",
 				curr_proc_delta[top_loading[i]] * 100 / delta_time,
 				top_loading[i],
 				task_ptr_array[top_loading[i]]->comm,
-				curr_proc_delta[top_loading[i]]);
+				curr_proc_delta[top_loading[i]]);*/
 #ifdef CONFIG_DEBUG_KSWAPD
 		if (task_ptr_array[top_loading[i]] && task_ptr_array[top_loading[i]]->flags & PF_KSWAPD)
 			kswapd_t = task_ptr_array[top_loading[i]];
@@ -779,8 +779,8 @@ void htc_kernel_top(void)
 
 #ifdef CONFIG_DEBUG_KSWAPD
 	if (kswapd_t) {
-		printk("\n[K][DEBUG] ###pid:%d name:%s state:%lu ppid:%d stime:%lu utime:%lu\n",
-				kswapd_t->pid, kswapd_t->comm, kswapd_t->state, kswapd_t->real_parent->pid, kswapd_t->stime, kswapd_t->utime);
+		/*printk("\n[K][DEBUG] ###pid:%d name:%s state:%lu ppid:%d stime:%lu utime:%lu\n",
+				kswapd_t->pid, kswapd_t->comm, kswapd_t->state, kswapd_t->real_parent->pid, kswapd_t->stime, kswapd_t->utime);*/
 		show_stack(kswapd_t, NULL);
 	}
 #endif
@@ -793,8 +793,8 @@ void htc_kernel_top(void)
 			t = task_ptr_array[top_loading[i]];
 			
 			do {
-				printk("\n[K] ###pid:%d name:%s state:%lu ppid:%d stime:%lu utime:%lu\n",
-				t->pid, t->comm, t->state, t->real_parent->pid, t->stime, t->utime);
+				/*printk("\n[K] ###pid:%d name:%s state:%lu ppid:%d stime:%lu utime:%lu\n",
+				t->pid, t->comm, t->state, t->real_parent->pid, t->stime, t->utime);*/
 				show_stack(t, t->stack);
 				t = next_thread(t);
 			} while (t != task_ptr_array[top_loading[i]]);
@@ -881,13 +881,13 @@ void htc_kernel_top_accumulation(void)
 
 	
 	if (pm_monitor_enabled) {
-		printk("[K] [KTOP] CPU Usage\t\tPID\t\tName\n");
+		//printk("[K] [KTOP] CPU Usage\t\tPID\t\tName\n");
 		for (i = 0 ; i < NUM_BUSY_THREAD_CHECK ; i++) {
-			printk("[K] [KTOP] %8lu%%\t\t%d\t\t%s\t\t%d\n",
+			/*printk("[K] [KTOP] %8lu%%\t\t%d\t\t%s\t\t%d\n",
 					curr_proc_delta_accu[top_loading_accu[i]] * 100 / delta_time,
 					top_loading_accu[i],
 					task_ptr_array_accu[top_loading_accu[i]]->comm,
-					curr_proc_delta_accu[top_loading_accu[i]]);
+					curr_proc_delta_accu[top_loading_accu[i]])*/;
 		}
 	}
 
@@ -906,8 +906,8 @@ void htc_kernel_top_accumulation(void)
 			
 			do {
 				if (pm_monitor_enabled)
-					printk("\n[K] [KTOP] ###pid:%d name:%s state:%lu ppid:%d stime:%lu utime:%lu\n",
-						t->pid, t->comm, t->state, t->real_parent->pid, t->stime, t->utime);
+					/*printk("\n[K] [KTOP] ###pid:%d name:%s state:%lu ppid:%d stime:%lu utime:%lu\n",
+						t->pid, t->comm, t->state, t->real_parent->pid, t->stime, t->utime)*/;
 				show_stack(t, t->stack);
 				t = next_thread(t);
 			} while (t != task_ptr_array_accu[top_loading_accu[i]]);
@@ -985,11 +985,11 @@ void htc_monitor_init(void)
 	if (htc_pm_monitor_wq == NULL) {
 		
 		htc_pm_monitor_wq = create_workqueue("htc_pm_monitor_wq");
-		printk(KERN_INFO "[K] Create HTC private workqueue(0x%x)...\n", (unsigned int)htc_pm_monitor_wq);
+		//printk(KERN_INFO "[K] Create HTC private workqueue(0x%x)...\n", (unsigned int)htc_pm_monitor_wq);
 	}
 
 	if (htc_pm_monitor_wq){
-		printk(KERN_INFO "[K] htc_pm_monitor_wq is not NULL.\n");
+		//printk(KERN_INFO "[K] htc_pm_monitor_wq is not NULL.\n");
 		INIT_DELAYED_WORK(&htc_pm_delayed_work, htc_pm_monitor_work);
 	}
 }
@@ -999,11 +999,11 @@ void htc_top_monitor_init(void)
 	if (htc_kernel_top_monitor_wq == NULL) {
 		
 		htc_kernel_top_monitor_wq = create_workqueue("htc_kernel_top_monitor_wq");
-		printk(KERN_INFO "[K] [KTOP] Create HTC private workqueue(0x%x)...\n", (unsigned int)htc_kernel_top_monitor_wq);
+		//printk(KERN_INFO "[K] [KTOP] Create HTC private workqueue(0x%x)...\n", (unsigned int)htc_kernel_top_monitor_wq);
 	}
 
 	if (htc_kernel_top_monitor_wq) {
-		printk(KERN_INFO "[K] [KTOP] htc_kernel_top_monitor_wq is not NULL.\n");
+		//printk(KERN_INFO "[K] [KTOP] htc_kernel_top_monitor_wq is not NULL.\n");
 #if USE_STATISTICS_STRATEGY_CONTINUOUS_3
 		clear_current_pid_found_array();
 		clear_process_monitor_array(&process_monitor_continuous_3_array[0], SIZE_OF_PROCESS_MONITOR_CONTINUOUS_3_ARRAY);

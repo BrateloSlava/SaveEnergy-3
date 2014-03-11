@@ -107,6 +107,9 @@ static int __maybe_unused two = 2;
 static int __maybe_unused three = 3;
 static unsigned long one_ul = 1;
 static int one_hundred = 100;
+#ifdef CONFIG_ZSWAP
+extern int max_swappiness;
+#endif
 #ifdef CONFIG_PRINTK
 static int ten_thousand = 10000;
 #endif
@@ -1072,6 +1075,33 @@ static struct ctl_table vm_table[] = {
 		.mode		= 0644,
 		.proc_handler	= dirty_writeback_centisecs_handler,
 	},
+#ifdef CONFIG_DYNAMIC_PAGE_WRITEBACK
+	{
+		.procname	= "dynamic_dirty_writeback",
+		.data		= &dyn_dirty_writeback_enabled,
+		.maxlen		= sizeof(dyn_dirty_writeback_enabled),
+		.mode		= 0644,
+		.proc_handler	= dynamic_dirty_writeback_handler,
+		.extra1		= &zero,
+		.extra2		= &one,
+	},
+	{
+		.procname	= "dirty_writeback_active_centisecs",
+		.data		= &dirty_writeback_active_interval,
+		.maxlen		= sizeof(dirty_writeback_active_interval),
+		.mode		= 0644,
+		.proc_handler	= dirty_writeback_active_centisecs_handler,
+		.extra1		= &zero,
+	},
+	{
+		.procname	= "dirty_writeback_suspend_centisecs",
+		.data		= &dirty_writeback_suspend_interval,
+		.maxlen		= sizeof(dirty_writeback_suspend_interval),
+		.mode		= 0644,
+		.proc_handler	= dirty_writeback_suspend_centisecs_handler,
+		.extra1		= &zero,
+	},
+#endif
 	{
 		.procname	= "dirty_expire_centisecs",
 		.data		= &dirty_expire_interval,
@@ -1094,7 +1124,11 @@ static struct ctl_table vm_table[] = {
 		.mode		= 0644,
 		.proc_handler	= proc_dointvec_minmax,
 		.extra1		= &zero,
+#ifdef CONFIG_ZSWAP
+		.extra2		= &max_swappiness,
+#else
 		.extra2		= &one_hundred,
+#endif
 	},
 #ifdef CONFIG_HUGETLB_PAGE
 	{

@@ -59,6 +59,10 @@ typedef unsigned __bitwise__ reclaim_mode_t;
 #define RECLAIM_MODE_LUMPYRECLAIM	((__force reclaim_mode_t)0x08u)
 #define RECLAIM_MODE_COMPACTION		((__force reclaim_mode_t)0x10u)
 
+#ifdef CONFIG_ZSWAP
+int max_swappiness = 200;
+#endif
+
 struct scan_control {
 	
 	unsigned long nr_scanned;
@@ -285,6 +289,7 @@ out:
 	return ret;
 }
 
+#ifndef CONFIG_DISABLE_LUMPY_RECLAIM
 static void set_reclaim_mode(int priority, struct scan_control *sc,
 				   bool sync)
 {
@@ -302,6 +307,25 @@ static void set_reclaim_mode(int priority, struct scan_control *sc,
 	else
 		sc->reclaim_mode = RECLAIM_MODE_SINGLE | RECLAIM_MODE_ASYNC;
 }
+#else
+static void set_reclaim_mode(int priority, struct scan_control *sc,
+				   bool sync)
+{
+	/* Sync reclaim used only for compaction */
+	reclaim_mode_t syncmode = sync ? RECLAIM_MODE_SYNC : RECLAIM_MODE_ASYNC;
+
+	/*
+	 * Restrict reclaim/compaction to costly allocations or when
+	 * under memory pressure
+	 */
+	if (COMPACTION_BUILD && sc->order &&
+			(sc->order > PAGE_ALLOC_COSTLY_ORDER ||
+			 priority < DEF_PRIORITY - 2))
+		sc->reclaim_mode = RECLAIM_MODE_COMPACTION | syncmode;
+	else
+		sc->reclaim_mode = RECLAIM_MODE_SINGLE | RECLAIM_MODE_ASYNC;
+}
+#endif
 
 static void reset_reclaim_mode(struct scan_control *sc)
 {
@@ -323,9 +347,11 @@ static int may_write_to_queue(struct backing_dev_info *bdi,
 	if (bdi == current->backing_dev_info)
 		return 1;
 
-	
+#ifndef CONFIG_DISABLE_LUMPY_RECLAIM
+	/* lumpy reclaim for hugepage often need a lot of write */
 	if (sc->order > PAGE_ALLOC_COSTLY_ORDER)
 		return 1;
+#endif
 	return 0;
 }
 
@@ -501,9 +527,11 @@ static enum page_references page_check_references(struct page *page,
 	referenced_ptes = page_referenced(page, 1, mz->mem_cgroup, &vm_flags);
 	referenced_page = TestClearPageReferenced(page);
 
-	
+#ifndef CONFIG_DISABLE_LUMPY_RECLAIM
+	/* Lumpy reclaim - ignore references */
 	if (sc->reclaim_mode & RECLAIM_MODE_LUMPYRECLAIM)
 		return PAGEREF_RECLAIM;
+#endif
 
 	if (vm_flags & VM_LOCKED)
 		return PAGEREF_RECLAIM;
@@ -585,7 +613,11 @@ static unsigned long shrink_page_list(struct list_head *page_list,
 				wait_on_page_writeback(page);
 			else {
 				unlock_page(page);
+#ifndef CONFIG_DISABLE_LUMPY_RECLAIM
 				goto keep_lumpy;
+#else
+				goto keep_reclaim_mode;
+#endif
 			}
 		}
 
@@ -656,7 +688,11 @@ static unsigned long shrink_page_list(struct list_head *page_list,
 				goto activate_locked;
 			case PAGE_SUCCESS:
 				if (PageWriteback(page))
+#ifndef CONFIG_DISABLE_LUMPY_RECLAIM
 					goto keep_lumpy;
+#else
+					goto keep_reclaim_mode;
+#endif
 				if (PageDirty(page))
 					goto keep;
 
@@ -734,7 +770,11 @@ keep_locked:
 		unlock_page(page);
 keep:
 		reset_reclaim_mode(sc);
+#ifndef CONFIG_DISABLE_LUMPY_RECLAIM
 keep_lumpy:
+#else
+keep_reclaim_mode:
+#endif
 		list_add(&page->lru, &ret_pages);
 		VM_BUG_ON(PageLRU(page) || PageUnevictable(page));
 	}
@@ -811,9 +851,11 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
 	struct lruvec *lruvec;
 	struct list_head *src;
 	unsigned long nr_taken = 0;
+#ifndef CONFIG_DISABLE_LUMPY_RECLAIM
 	unsigned long nr_lumpy_taken = 0;
 	unsigned long nr_lumpy_dirty = 0;
 	unsigned long nr_lumpy_failed = 0;
+#endif
 	unsigned long scan;
 	int lru = LRU_BASE;
 
@@ -826,10 +868,12 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
 
 	for (scan = 0; scan < nr_to_scan && !list_empty(src); scan++) {
 		struct page *page;
+#ifndef CONFIG_DISABLE_LUMPY_RECLAIM
 		unsigned long pfn;
 		unsigned long end_pfn;
 		unsigned long page_pfn;
 		int zone_id;
+#endif
 
 		page = lru_to_page(src);
 		prefetchw_prev_lru_page(page, src, flags);
@@ -852,6 +896,7 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
 			BUG();
 		}
 
+#ifndef CONFIG_DISABLE_LUMPY_RECLAIM
 		if (!sc->order || !(sc->reclaim_mode & RECLAIM_MODE_LUMPYRECLAIM))
 			continue;
 
@@ -903,6 +948,7 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
 		
 		if (pfn < end_pfn)
 			nr_lumpy_failed++;
+#endif
 	}
 
 	*nr_scanned = scan;
@@ -910,7 +956,9 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
 	trace_mm_vmscan_lru_isolate(sc->order,
 			nr_to_scan, scan,
 			nr_taken,
+#ifndef CONFIG_DISABLE_LUMPY_RECLAIM
 			nr_lumpy_taken, nr_lumpy_dirty, nr_lumpy_failed,
+#endif
 			mode, file);
 	return nr_taken;
 }
@@ -1100,8 +1148,10 @@ shrink_inactive_list(unsigned long nr_to_scan, struct mem_cgroup_zone *mz,
 	}
 
 	set_reclaim_mode(priority, sc, false);
+#ifndef CONFIG_DISABLE_LUMPY_RECLAIM
 	if (sc->reclaim_mode & RECLAIM_MODE_LUMPYRECLAIM)
 		isolate_mode |= ISOLATE_ACTIVE;
+#endif
 
 	lru_add_drain();
 
@@ -1423,7 +1473,11 @@ static void get_scan_count(struct mem_cgroup_zone *mz, struct scan_control *sc,
 	}
 
 	anon_prio = vmscan_swappiness(mz, sc);
+#ifdef CONFIG_ZSWAP
+	file_prio = max_swappiness - vmscan_swappiness(mz, sc);
+#else
 	file_prio = 200 - vmscan_swappiness(mz, sc);
+#endif
 
 	spin_lock_irq(&mz->zone->lru_lock);
 	if (unlikely(reclaim_stat->recent_scanned[0] > anon / 4)) {
@@ -1770,7 +1824,11 @@ unsigned long try_to_free_pages(struct zonelist *zonelist, int order,
 		.may_writepage = !laptop_mode,
 		.nr_to_reclaim = SWAP_CLUSTER_MAX,
 		.may_unmap = 1,
+#ifdef CONFIG_DIRECT_RECLAIM_FILE_PAGES_ONLY
+		.may_swap = 0,
+#else
 		.may_swap = 1,
+#endif
 		.order = order,
 		.target_mem_cgroup = NULL,
 		.nodemask = nodemask,
@@ -1896,8 +1954,12 @@ static bool pgdat_balanced(pg_data_t *pgdat, unsigned long balanced_pages,
 	for (i = 0; i <= classzone_idx; i++)
 		present_pages += pgdat->node_zones[i].present_pages;
 
-	
+#ifdef CONFIG_TIGHT_PGDAT_BALANCE
+	return balanced_pages >= (present_pages >> 1);
+#else
+	/* A special case here: if zone has no page, we think it's balanced */
 	return balanced_pages >= (present_pages >> 2);
+#endif
 }
 
 static bool sleeping_prematurely(pg_data_t *pgdat, int order, long remaining,
@@ -1939,7 +2001,7 @@ static bool sleeping_prematurely(pg_data_t *pgdat, int order, long remaining,
 static unsigned long balance_pgdat(pg_data_t *pgdat, int order,
 							int *classzone_idx)
 {
-	int all_zones_ok;
+	struct zone *unbalanced_zone;
 	unsigned long balanced;
 	int priority;
 	int i;
@@ -1973,7 +2035,7 @@ loop_again:
 		if (!priority)
 			disable_swap_token(NULL);
 
-		all_zones_ok = 1;
+		unbalanced_zone = NULL;
 		balanced = 0;
 
 		for (i = pgdat->nr_zones - 1; i >= 0; i--) {
@@ -2035,11 +2097,12 @@ loop_again:
 					KSWAPD_ZONE_BALANCE_GAP_RATIO-1) /
 				KSWAPD_ZONE_BALANCE_GAP_RATIO);
 			testorder = order;
+#ifndef CONFIG_TIGHT_PGDAT_BALANCE
 			if (COMPACTION_BUILD && order &&
 					compaction_suitable(zone, order) !=
 						COMPACT_SKIPPED)
 				testorder = 0;
-
+#endif
 			if ((buffer_heads_over_limit && is_highmem_idx(i)) ||
 				    !zone_watermark_ok_safe(zone, testorder,
 					high_wmark_pages(zone) + balance_gap,
@@ -2067,7 +2130,12 @@ loop_again:
 
 			if (!zone_watermark_ok_safe(zone, testorder,
 					high_wmark_pages(zone), end_zone, 0)) {
-				all_zones_ok = 0;
+				unbalanced_zone = zone;
+				/*
+				 * We are still under min water mark.  This
+				 * means that we have a GFP_ATOMIC allocation
+				 * failure risk. Hurry up!
+				 */
 				if (!zone_watermark_ok_safe(zone, order,
 					    min_wmark_pages(zone), end_zone, 0))
 					has_under_min_watermark_zone = 1;
@@ -2078,13 +2146,17 @@ loop_again:
 			}
 
 		}
-		if (all_zones_ok || (order && pgdat_balanced(pgdat, balanced, *classzone_idx)))
-			break;		
+		if (!unbalanced_zone || (order && pgdat_balanced(pgdat, balanced, *classzone_idx)))
+			break;		/* kswapd: all done */
+		/*
+		 * OK, kswapd is getting into trouble.  Take a nap, then take
+		 * another pass across the zones.
+		 */
 		if (total_scanned && (priority < DEF_PRIORITY - 2)) {
 			if (has_under_min_watermark_zone)
 				count_vm_event(KSWAPD_SKIP_CONGESTION_WAIT);
 			else
-				congestion_wait(BLK_RW_ASYNC, HZ/10);
+				wait_iff_congested(unbalanced_zone, BLK_RW_ASYNC, HZ/10);
 		}
 
 		if (sc.nr_reclaimed >= SWAP_CLUSTER_MAX)
@@ -2092,7 +2164,12 @@ loop_again:
 	}
 out:
 
-	if (!(all_zones_ok || (order && pgdat_balanced(pgdat, balanced, *classzone_idx)))) {
+	/*
+	 * order-0: All zones must meet high watermark for a balanced node
+	 * high-order: Balanced zones must make up at least 25% of the node
+	 *             for the node to be balanced
+	 */
+	if (unbalanced_zone && (!order || !pgdat_balanced(pgdat, balanced, *classzone_idx))) {
 		cond_resched();
 
 		try_to_freeze();

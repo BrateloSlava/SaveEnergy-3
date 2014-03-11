@@ -45,7 +45,7 @@
 #include <net/rtnetlink.h>
 #include <net/xfrm.h>
 
-#define FIB_IPTABLES_DEBUG 1
+// #define FIB_IPTABLES_DEBUG 1
 
 
 #ifndef CONFIG_IP_MULTIPLE_TABLES

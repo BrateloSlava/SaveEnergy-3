@@ -439,6 +439,7 @@ static bool elv_attempt_insert_merge(struct request_queue *q,
 				     struct request *rq)
 {
 	struct request *__rq;
+	bool ret;
 
 	if (blk_queue_nomerges(q))
 		return false;
@@ -448,12 +449,17 @@ static bool elv_attempt_insert_merge(struct request_queue *q,
 
 	if (blk_queue_noxmerges(q))
 		return false;
+		ret = false;
 
-	__rq = elv_rqhash_find(q, blk_rq_pos(rq));
-	if (__rq && blk_attempt_req_merge(q, __rq, rq))
-		return true;
+  while (1) {
+    __rq = elv_rqhash_find(q, blk_rq_pos(rq));
+    if (!__rq || !blk_attempt_req_merge(q, __rq, rq))
+      break;
+   ret = true;
+    rq = __rq;
+  }
 
-	return false;
+  return ret;
 }
 
 void elv_merged_request(struct request_queue *q, struct request *rq, int type)
@@ -508,6 +514,27 @@ void elv_requeue_request(struct request_queue *q, struct request *rq)
 	rq->cmd_flags &= ~REQ_STARTED;
 
 	__elv_add_request(q, rq, ELEVATOR_INSERT_REQUEUE);
+}
+
+int elv_reinsert_request(struct request_queue *q, struct request *rq)
+{
+	int res;
+
+	if (!q->elevator->type->ops.elevator_reinsert_req_fn)
+		return -EPERM;
+
+	res = q->elevator->type->ops.elevator_reinsert_req_fn(q, rq);
+	if (!res) {
+		if (blk_account_rq(rq)) {
+			q->in_flight[rq_is_sync(rq)]--;
+			if (rq->cmd_flags & REQ_SORTED)
+				elv_deactivate_rq(q, rq);
+		}
+		rq->cmd_flags &= ~REQ_STARTED;
+		q->nr_sorted++;
+	}
+
+	return res;
 }
 
 void elv_drain_elevator(struct request_queue *q)
@@ -679,6 +706,12 @@ EXPORT_SYMBOL(elv_abort_queue);
 void elv_completed_request(struct request_queue *q, struct request *rq)
 {
 	struct elevator_queue *e = q->elevator;
+
+  if (rq->cmd_flags & REQ_URGENT) {
+    q->notified_urgent = false;
+	WARN_ON(!q->dispatched_urgent);
+    q->dispatched_urgent = false;
+  } 
 
 	if (blk_account_rq(rq)) {
 		q->in_flight[rq_is_sync(rq)]--;
