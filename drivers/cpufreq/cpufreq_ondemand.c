@@ -26,15 +26,29 @@
 #include <linux/workqueue.h>
 #include <linux/kthread.h>
 #include <linux/slab.h>
-#include <linux/synaptics_i2c_rmi.h>
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/cpufreq_interactive.h>
 
+//gboost
+#include <mach/kgsl.h>
+static int old_up_threshold;
+static int g_count = 0;
 
-#define DEF_SAMPLING_RATE				(50000)
+#if defined(CONFIG_CPU_MAX_OVERCLOCK)
+#define MAX_CPU_ONDEMAND_FREQ	1674000
+#elif defined(CONFIG_CPU_OVERCLOCK) && !defined(CONFIG_CPU_MAX_OVERCLOCK)
+#define MAX_CPU_ONDEMAND_FREQ	1458000 
+#else
+#define MAX_CPU_ONDEMAND_FREQ	1188000 
+#endif
+
+#define TWO_PHASE_FREQ		918000
+#define INPUT_EVENT_FREQ	810000
+
+#define DEF_SAMPLING_RATE			(30000)
 #define DEF_FREQUENCY_DOWN_DIFFERENTIAL		(10)
-#define DEF_FREQUENCY_UP_THRESHOLD		(80)
+#define DEF_FREQUENCY_UP_THRESHOLD		(90)
 #define DEF_SAMPLING_DOWN_FACTOR		(1)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
 #define MICRO_FREQUENCY_DOWN_DIFFERENTIAL	(3)
@@ -43,20 +57,19 @@
 #define MIN_FREQUENCY_UP_THRESHOLD		(11)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
 #define MIN_FREQUENCY_DOWN_DIFFERENTIAL		(1)
-#define DBS_INPUT_EVENT_MIN_FREQ		(486000)
-#define DEF_UI_DYNAMIC_SAMPLING_RATE		(30000)
-#define DBS_UI_SAMPLING_MIN_TIMEOUT		(30)
-#define DBS_UI_SAMPLING_MAX_TIMEOUT		(1000)
-#define DBS_UI_SAMPLING_TIMEOUT			(80)
-#define DBS_SWITCH_MODE_TIMEOUT		(1000)
-
+#define UI_DYNAMIC_SAMPLING_RATE		(15000)
+#define INPUT_EVENT_MIN_TIMEOUT			(0)
+#define INPUT_EVENT_MAX_TIMEOUT			(3000)
+#define INPUT_EVENT_TIMEOUT			(1000)
+#define DBS_SWITCH_MODE_TIMEOUT			(1000)
+#define DEF_GBOOST_THRESHOLD     		(49)
 #define MIN_SAMPLING_RATE_RATIO			(2)
 
 static unsigned int min_sampling_rate;
 static unsigned int skip_ondemand = 0;
 
 #define LATENCY_MULTIPLIER			(1000)
-#define MIN_LATENCY_MULTIPLIER			(20)
+#define MIN_LATENCY_MULTIPLIER			(100)
 #define TRANSITION_LATENCY_LIMIT		(10 * 1000 * 1000)
 
 #define POWERSAVE_BIAS_MAXLEVEL			(1000)
@@ -145,13 +158,13 @@ static struct dbs_tuners {
 	unsigned int sampling_down_factor;
 	int          powersave_bias;
 	unsigned int io_is_busy;
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
 	unsigned int two_phase_freq;
-#endif
 	unsigned int origin_sampling_rate;
 	unsigned int ui_sampling_rate;
-	unsigned int ui_timeout;
+	unsigned int input_event_timeout;
 	unsigned int enable_boost_cpu;
+	int gboost;
+	unsigned int gboost_threshold;
 } dbs_tuners_ins = {
 	.up_threshold_multi_core = DEF_FREQUENCY_UP_THRESHOLD,
 	.up_threshold = DEF_FREQUENCY_UP_THRESHOLD,
@@ -163,12 +176,12 @@ static struct dbs_tuners {
 	.powersave_bias = 0,
 	.sync_freq = 0,
 	.optimal_freq = 0,
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
 	.two_phase_freq = 0,
-#endif
-	.ui_sampling_rate = DEF_UI_DYNAMIC_SAMPLING_RATE,
-	.ui_timeout = DBS_UI_SAMPLING_TIMEOUT,
+	.ui_sampling_rate = UI_DYNAMIC_SAMPLING_RATE,
+	.input_event_timeout = INPUT_EVENT_TIMEOUT,
 	.enable_boost_cpu = 1,
+	.gboost = 1,
+	.gboost_threshold = DEF_GBOOST_THRESHOLD,
 };
 
 bool is_ondemand_locked(void)
@@ -365,7 +378,9 @@ show_one(ignore_nice_load, ignore_nice);
 show_one(optimal_freq, optimal_freq);
 show_one(up_threshold_any_cpu_load, up_threshold_any_cpu_load);
 show_one(sync_freq, sync_freq);
-show_one(enable_boost_cpu, enable_boost_cpu)
+show_one(enable_boost_cpu, enable_boost_cpu);
+show_one(gboost, gboost);
+show_one(gboost_threshold, gboost_threshold);
 
 static ssize_t show_powersave_bias
 (struct kobject *kobj, struct attribute *attr, char *buf)
@@ -415,9 +430,9 @@ static void update_sampling_rate(unsigned int new_rate)
 	}
 }
 
-show_one(ui_timeout, ui_timeout);
+show_one(input_event_timeout, input_event_timeout);
 
-static ssize_t store_ui_timeout(struct kobject *a, struct attribute *b,
+static ssize_t store_input_event_timeout(struct kobject *a, struct attribute *b,
 				      const char *buf, size_t count)
 {
 	unsigned int input;
@@ -426,14 +441,13 @@ static ssize_t store_ui_timeout(struct kobject *a, struct attribute *b,
 	if (ret != 1)
 		return -EINVAL;
 
-	input = max(input, (unsigned int)DBS_UI_SAMPLING_MIN_TIMEOUT);
-	dbs_tuners_ins.ui_timeout = min(input, (unsigned int)DBS_UI_SAMPLING_MAX_TIMEOUT);
+	input = max(input, (unsigned int)INPUT_EVENT_MIN_TIMEOUT);
+	dbs_tuners_ins.input_event_timeout = min(input, (unsigned int)INPUT_EVENT_MAX_TIMEOUT);
 
 	return count;
 }
 
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
-static int two_phase_freq_array[NR_CPUS] = {[0 ... NR_CPUS-1] = 0} ;
+static int two_phase_freq_array[NR_CPUS] = {[0 ... NR_CPUS-1] = TWO_PHASE_FREQ} ;
 
 static ssize_t show_two_phase_freq
 (struct kobject *kobj, struct attribute *attr, char *buf)
@@ -470,9 +484,7 @@ static ssize_t store_two_phase_freq(struct kobject *a, struct attribute *b,
 	return count;
 }
 
-#endif
-
-static int input_event_min_freq_array[NR_CPUS] = {[0 ... NR_CPUS-1] = DBS_INPUT_EVENT_MIN_FREQ} ;
+static int input_event_min_freq_array[NR_CPUS] = {INPUT_EVENT_FREQ, INPUT_EVENT_FREQ} ;
 
 static ssize_t show_input_event_min_freq
 (struct kobject *kobj, struct attribute *attr, char *buf)
@@ -814,6 +826,34 @@ static ssize_t store_enable_boost_cpu(struct kobject *a, struct attribute *b,
 	return count;
 }
 
+static ssize_t store_gboost(struct kobject *a, struct attribute *b,
+				const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+
+	ret = sscanf(buf, "%u", &input);
+	if(ret != 1)
+		return -EINVAL;
+	dbs_tuners_ins.gboost = (input > 0 ? input : 0);
+	return count;
+}
+
+static ssize_t store_gboost_threshold(struct kobject *a, struct attribute *b,
+				  const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+	ret = sscanf(buf, "%u", &input);
+
+	if (ret != 1 || input > MAX_FREQUENCY_UP_THRESHOLD ||
+			input < MIN_FREQUENCY_UP_THRESHOLD) {
+		return -EINVAL;
+	}
+	dbs_tuners_ins.gboost_threshold = input;
+	return count;
+}
+
 define_one_global_rw(sampling_rate);
 define_one_global_rw(io_is_busy);
 define_one_global_rw(up_threshold);
@@ -825,13 +865,13 @@ define_one_global_rw(up_threshold_multi_core);
 define_one_global_rw(optimal_freq);
 define_one_global_rw(up_threshold_any_cpu_load);
 define_one_global_rw(sync_freq);
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
 define_one_global_rw(two_phase_freq);
-#endif
 define_one_global_rw(input_event_min_freq);
 define_one_global_rw(ui_sampling_rate);
-define_one_global_rw(ui_timeout);
+define_one_global_rw(input_event_timeout);
 define_one_global_rw(enable_boost_cpu);
+define_one_global_rw(gboost);
+define_one_global_rw(gboost_threshold);
 
 static struct attribute *dbs_attributes[] = {
 	&sampling_rate_min.attr,
@@ -846,13 +886,13 @@ static struct attribute *dbs_attributes[] = {
 	&optimal_freq.attr,
 	&up_threshold_any_cpu_load.attr,
 	&sync_freq.attr,
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
 	&two_phase_freq.attr,
-#endif
 	&input_event_min_freq.attr,
 	&ui_sampling_rate.attr,
-	&ui_timeout.attr,
+	&input_event_timeout.attr,
 	&enable_boost_cpu.attr,
+	&gboost.attr,
+	&gboost_threshold.attr,
 	NULL
 };
 
@@ -1006,21 +1046,7 @@ static void dbs_freq_increase(struct cpufreq_policy *p, unsigned load, unsigned 
 	trace_cpufreq_interactive_up (p->cpu, freq, p->cur);
 }
 
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
-int set_two_phase_freq(int cpufreq)
-{
-	int i  = 0;
-	for ( i = 0 ; i < NR_CPUS; i++)
-		two_phase_freq_array[i] = cpufreq;
-	return 0;
-}
-
-void set_two_phase_freq_by_cpu ( int cpu_nr, int cpufreq){
-	two_phase_freq_array[cpu_nr-1] = cpufreq;
-}
-#endif
-
-static int input_event_boosted(void)
+int input_event_boosted(void)
 {
 	unsigned long flags;
 
@@ -1037,6 +1063,22 @@ static int input_event_boosted(void)
 	spin_unlock_irqrestore(&input_boost_lock, flags);
 
 	return 0;
+}
+
+static void boost_min_freq(int min_freq)
+{
+	int i;
+	struct cpu_dbs_info_s *dbs_info;
+
+	for_each_online_cpu(i) {
+		dbs_info = &per_cpu(od_cpu_dbs_info, i);
+		
+		if (dbs_info->cur_policy
+			&& dbs_info->cur_policy->cur < min_freq) {
+			dbs_info->input_event_freq = min_freq;
+			wake_up_process(per_cpu(up_task, i));
+		}
+	}
 }
 
 static unsigned int get_cpu_current_load(unsigned int j, unsigned int *record)
@@ -1105,11 +1147,11 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	unsigned int max_load_other_cpu = 0;
 	struct cpufreq_policy *policy;
 	unsigned int j, prev_load = 0, freq_next;
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
+
 	static unsigned int phase = 0;
 	static unsigned int counter = 0;
 	unsigned int nr_cpus;
-#endif
+
 
 	this_dbs_info->freq_lo = 0;
 	policy = this_dbs_info->cur_policy;
@@ -1159,7 +1201,39 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	cpufreq_notify_utilization(policy, load_at_max_freq);
 
 	
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_MULTI_PHASE
+//gboost
+//printk("gcount=%d\n", g_count);
+if (graphics_boost == 0 || g_count > 30) {
+
+	if (max_load_freq > dbs_tuners_ins.up_threshold * policy->cur) {
+		
+		if (counter < 5) {
+			counter++;
+			if (counter > 2) {
+				
+				phase = 1;
+			}
+		}
+
+		nr_cpus = num_online_cpus();
+		dbs_tuners_ins.two_phase_freq = two_phase_freq_array[nr_cpus-1];
+		if (dbs_tuners_ins.two_phase_freq < policy->cur)
+			phase=1;
+
+		if (dbs_tuners_ins.two_phase_freq != 0 && phase == 0) {
+			
+			dbs_freq_increase(policy, cur_load, dbs_tuners_ins.two_phase_freq);
+		} else {
+			
+			if (policy->cur < policy->max)
+				this_dbs_info->rate_mult =
+					dbs_tuners_ins.sampling_down_factor;
+			dbs_freq_increase(policy, cur_load, policy->max);
+		}
+		return;
+	}
+
+} else {
 	if (max_load_freq > up_threshold_level[1] * policy->cur) {
 		unsigned int avg_load = (prev_load + cur_load) >> 1;
 		int index = get_cpu_freq_index(policy->cur);
@@ -1191,44 +1265,13 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 		
 		if (policy->cur == policy->max)
 			this_dbs_info->rate_mult = dbs_tuners_ins.sampling_down_factor;
+
 		return;
 	}
-#else
-	if (max_load_freq > dbs_tuners_ins.up_threshold * policy->cur) {
-		
-#ifndef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
-		if (policy->cur < policy->max)
-			this_dbs_info->rate_mult =
-				dbs_tuners_ins.sampling_down_factor;
-		dbs_freq_increase(policy, cur_load, policy->max);
-#else
-		if (counter < 5) {
-			counter++;
-			if (counter > 2) {
-				
-				phase = 1;
-			}
-		}
+}
 
-		nr_cpus = num_online_cpus();
-		dbs_tuners_ins.two_phase_freq = two_phase_freq_array[nr_cpus-1];
-		if (dbs_tuners_ins.two_phase_freq < policy->cur)
-			phase=1;
-
-		if (dbs_tuners_ins.two_phase_freq != 0 && phase == 0) {
-			
-			dbs_freq_increase(policy, cur_load, dbs_tuners_ins.two_phase_freq);
-		} else {
-			
-			if (policy->cur < policy->max)
-				this_dbs_info->rate_mult =
-					dbs_tuners_ins.sampling_down_factor;
-			dbs_freq_increase(policy, cur_load, policy->max);
-		}
-#endif
-		return;
-	}
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
+//graphics boost
+if (dbs_tuners_ins.gboost) {
 	if (counter > 0) {
 		counter--;
 		if (counter == 0) {
@@ -1236,8 +1279,27 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 			phase = 0;
 		}
 	}
-#endif
-#endif
+
+	if (g_count < 100 && graphics_boost < 2) {
+	        ++g_count;
+	} else if (g_count > 1) {
+	        --g_count;
+	        --g_count;
+	}
+
+	if (graphics_boost == 0 && g_count > 90) {
+		if (dbs_tuners_ins.up_threshold != dbs_tuners_ins.gboost_threshold)
+			old_up_threshold = dbs_tuners_ins.up_threshold;
+		dbs_tuners_ins.up_threshold = dbs_tuners_ins.gboost_threshold;
+	} else {
+		if (dbs_tuners_ins.up_threshold == dbs_tuners_ins.gboost_threshold)
+			dbs_tuners_ins.up_threshold = old_up_threshold;
+	}
+	if (g_count > 40) {
+		boost_min_freq(1134000);
+	}
+}
+//end
 
 	if (num_online_cpus() > 1) {
 		if (max_load_other_cpu >
@@ -1245,6 +1307,8 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 			if (policy->cur < dbs_tuners_ins.sync_freq)
 				dbs_freq_increase(policy, cur_load,
 						dbs_tuners_ins.sync_freq);
+			else
+				trace_cpufreq_interactive_already (policy->cpu, cur_load, policy->cur,policy->cur);
 			return;
 		}
 
@@ -1253,6 +1317,8 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 			if (policy->cur < dbs_tuners_ins.optimal_freq)
 				dbs_freq_increase(policy, cur_load,
 						dbs_tuners_ins.optimal_freq);
+			else
+				trace_cpufreq_interactive_already (policy->cpu, cur_load, policy->cur,policy->cur);
 			return;
 		}
 	}
@@ -1385,10 +1451,12 @@ static int should_io_be_busy(void)
 static void dbs_input_event(struct input_handle *handle, unsigned int type,
 		unsigned int code, int value)
 {
-	int i;
-	struct cpu_dbs_info_s *dbs_info;
+
 	unsigned long flags;
 	int input_event_min_freq;
+
+	if (dbs_tuners_ins.input_event_timeout == 0)
+		return;
 
 	if ((dbs_tuners_ins.powersave_bias == POWERSAVE_BIAS_MAXLEVEL) ||
 		(dbs_tuners_ins.powersave_bias == POWERSAVE_BIAS_MINLEVEL)) {
@@ -1396,11 +1464,6 @@ static void dbs_input_event(struct input_handle *handle, unsigned int type,
 		return;
 	}
 
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_MULTI_PHASE
-	if (type == EV_SYN && code == SYN_REPORT) {
-		
-		dbs_tuners_ins.powersave_bias = 0;
-	}
 	else if (type == EV_ABS && code == ABS_MT_TRACKING_ID) {
 
 		if (value != -1) {		
@@ -1413,66 +1476,22 @@ static void dbs_input_event(struct input_handle *handle, unsigned int type,
 			
 			spin_lock_irqsave(&input_boost_lock, flags);
 			input_event_boost = true;
-			input_event_boost_expired = jiffies + usecs_to_jiffies(dbs_tuners_ins.sampling_rate * 2);
+			input_event_boost_expired = jiffies + usecs_to_jiffies(dbs_tuners_ins.input_event_timeout * 1000);
 			spin_unlock_irqrestore(&input_boost_lock, flags);
 
-			for_each_online_cpu(i) {
-				dbs_info = &per_cpu(od_cpu_dbs_info, i);
-				
-				if (dbs_info->cur_policy
-					&& dbs_info->cur_policy->cur < input_event_min_freq) {
-					dbs_info->input_event_freq = input_event_min_freq;
-					wake_up_process(per_cpu(up_task, i));
-				}
-			}
+			boost_min_freq(input_event_min_freq);
 		}
 		else {		
 			if (likely(input_event_counter > 0))
 				input_event_counter--;
 			else
-				pr_warning("dbs_input_event: Touch isn't paired!\n");
+				pr_debug("dbs_input_event: Touch isn't paired!\n");
 
 			
 			switch_turbo_mode(DBS_SWITCH_MODE_TIMEOUT);
 		}
 	}
-#else
-	if (type == EV_SYN && code == SYN_REPORT) {
 
-		
-		spin_lock_irqsave(&input_boost_lock, flags);
-		input_event_boost = true;
-		input_event_boost_expired = jiffies + msecs_to_jiffies(dbs_tuners_ins.ui_timeout);
-		spin_unlock_irqrestore(&input_boost_lock, flags);
-
-		input_event_min_freq = input_event_min_freq_array[num_online_cpus() - 1];
-		for_each_online_cpu(i) {
-			
-			if (likely(per_cpu(cpufreq_init_done, i))) {
-				dbs_info = &per_cpu(od_cpu_dbs_info, i);
-				if (dbs_info->cur_policy &&		
-					dbs_info->cur_policy->cur < input_event_min_freq) {
-					dbs_info->input_event_freq = input_event_min_freq;
-					wake_up_process(per_cpu(up_task, i));
-				}
-			} else {
-				pr_info("dbs_input_event: cpu%d not init done...\n", i);
-			}
-		}
-	}
-#endif
-}
-
-static int input_dev_filter(const char *input_dev_name)
-{
-	if (strstr(input_dev_name, "touchscreen") ||
-	    strstr(input_dev_name, "synaptics-rmi-touchscreen") ||
- 	    strstr(input_dev_name, SYNAPTICS_3200_NAME) ||
-	    strstr(input_dev_name, "keypad")) {
-		return 0; 
-	} else {
-		return 1;
-	}
 }
 
 static int dbs_input_connect(struct input_handler *handler,
@@ -1480,10 +1499,6 @@ static int dbs_input_connect(struct input_handler *handler,
 {
 	struct input_handle *handle;
 	int error;
-
-	
-	if (input_dev_filter(dev->name))
-		return -ENODEV;
 
 	handle = kzalloc(sizeof(struct input_handle), GFP_KERNEL);
 	if (!handle)
@@ -1517,25 +1532,28 @@ static void dbs_input_disconnect(struct input_handle *handle)
 }
 
 static const struct input_device_id dbs_ids[] = {
-  {
-    .flags = INPUT_DEVICE_ID_MATCH_EVBIT |
-      INPUT_DEVICE_ID_MATCH_ABSBIT,
-    .evbit = { BIT_MASK(EV_ABS) },
-    .absbit = { [BIT_WORD(ABS_MT_POSITION_X)] =
-      BIT_MASK(ABS_MT_POSITION_X) |
-      BIT_MASK(ABS_MT_POSITION_Y) },
-  },
-  {
-    .flags = INPUT_DEVICE_ID_MATCH_KEYBIT |
-      INPUT_DEVICE_ID_MATCH_ABSBIT,
-    .keybit = { [BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH) },
-    .absbit = { [BIT_WORD(ABS_X)] =
-      BIT_MASK(ABS_X) | BIT_MASK(ABS_Y) },
-  },
-  {
-    .flags = INPUT_DEVICE_ID_MATCH_EVBIT,
-    .evbit = { BIT_MASK(EV_KEY) },
-  },
+	/* multi-touch touchscreen */
+	{
+		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
+			INPUT_DEVICE_ID_MATCH_ABSBIT,
+		.evbit = { BIT_MASK(EV_ABS) },
+		.absbit = { [BIT_WORD(ABS_MT_POSITION_X)] =
+			BIT_MASK(ABS_MT_POSITION_X) |
+			BIT_MASK(ABS_MT_POSITION_Y) },
+	},
+	/* touchpad */
+	{
+		.flags = INPUT_DEVICE_ID_MATCH_KEYBIT |
+			INPUT_DEVICE_ID_MATCH_ABSBIT,
+		.keybit = { [BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH) },
+		.absbit = { [BIT_WORD(ABS_X)] =
+			BIT_MASK(ABS_X) | BIT_MASK(ABS_Y) },
+	},
+	/* Keypad */
+	{
+		.flags = INPUT_DEVICE_ID_MATCH_EVBIT,
+		.evbit = { BIT_MASK(EV_KEY) },
+	},
 	{ },
 };
 
@@ -1547,13 +1565,7 @@ static struct input_handler dbs_input_handler = {
 	.id_table	= dbs_ids,
 };
 
-int set_input_event_min_freq(int cpufreq)
-{
-	int i  = 0;
-	for ( i = 0 ; i < NR_CPUS; i++)
-		input_event_min_freq_array[i] = cpufreq;
-	return 0;
-}
+
 
 void set_input_event_min_freq_by_cpu ( int cpu_nr, int cpufreq){
 	input_event_min_freq_array[cpu_nr-1] = cpufreq;

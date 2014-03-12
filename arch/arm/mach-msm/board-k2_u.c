@@ -124,11 +124,6 @@
 #include <mach/perflock.h>
 #endif
 
-
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
-int set_two_phase_freq(int cpufreq);
-#endif
-
 static struct platform_device msm_fm_platform_init = {
 	.name = "iris_fm",
 	.id   = -1,
@@ -3395,10 +3390,6 @@ static void __init k2_u_init(void)
 	change_memory_power = &msm8930_change_memory_power;
 	BUG_ON(msm_pm_boot_init(&msm_pm_boot_pdata));
 	msm_pm_init_sleep_status_data(&msm_pm_slp_sts_data);
-
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
-	set_two_phase_freq(918000);
-#endif
 
 	k2_u_init_keypad();
 	if ((get_kernel_flag() & KERNEL_FLAG_PM_MONITOR) ||
