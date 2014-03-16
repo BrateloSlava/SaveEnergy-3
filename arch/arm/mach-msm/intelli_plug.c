@@ -22,6 +22,7 @@
 #include <linux/rq_stats.h>
 #include <linux/slab.h>
 #include <linux/input.h>
+#include <linux/synaptics_i2c_rmi.h>
 
 //#define DEBUG_INTELLI_PLUG
 #undef DEBUG_INTELLI_PLUG
@@ -448,6 +449,8 @@ static void intelli_plug_input_event(struct input_handle *handle,
 static int input_dev_filter(const char *input_dev_name)
 {
 	if (strstr(input_dev_name, "touchscreen") ||
+		strstr(input_dev_name, "synaptics-rmi-touchscreen") ||
+		strstr(input_dev_name, SYNAPTICS_3200_NAME) ||
 		strstr(input_dev_name, "synaptics_dsx_i2c") ||
 		strstr(input_dev_name, "sec_touchscreen") ||
 		strstr(input_dev_name, "touch_dev") ||
