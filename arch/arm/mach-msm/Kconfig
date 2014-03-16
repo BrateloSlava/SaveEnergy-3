@@ -1748,6 +1748,19 @@ config MSM_CPU_FREQ_MIN
 
 endif # CPU_FREQ_MSM
 
+config INTELLI_PLUG
+	bool "Enable intelli-plug cpu hotplug driver"
+	default n
+	help
+	  Generic Intelli-plug cpu hotplug driver for ARM SOCs
+
+config INTELLI_PLUG_DUAL
+	bool "Enable dual-core mode for intelliplug"
+	depends on INTELLI_PLUG
+	default n
+	help
+	  Special dual-core mode for intelli-plug
+
 config USERSPACE_VOLTAGE_CONTROL
 	bool "Enable Userspace CPU Voltage Control"
 	default n
@@ -1774,12 +1787,14 @@ config GPU_OVERCLOCK
 
 config CPU_MAX_OVERCLOCK
         bool "Enable CPU Overclocking option 1.674 GHz"
+	depends on CPU_OVERCLOCK
         default n
         help
           Qualcomm overclocking up to 1.674 GHz
 
 config GPU_MAX_OVERCLOCK
         bool "Enable GPU Overclocking option 487.5 MHz"
+	depends on GPU_OVERCLOCK
         default n
         help
           Qualcomm GPU overclocking to 487.5 MHz
@@ -2410,6 +2425,7 @@ config MSM_STANDALONE_POWER_COLLAPSE
 config SLEEPY_PLUG
 	bool "sleepy_plug by rmbq"
 	default n
+
 config MSM_GSBI9_UART
 	bool "Enable GSBI9 UART device"
 	default n
