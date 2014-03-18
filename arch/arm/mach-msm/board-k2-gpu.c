@@ -43,11 +43,15 @@ static struct msm_bus_vectors grp3d_low_vectors[] = {
 		.src = MSM_BUS_MASTER_GRAPHICS_3D,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
 		.ab = 0,
+#ifdef CONFIG_GPU_OVERCLOCK
+		.ib = KGSL_CONVERT_TO_MBPS(1096),
+#else
 		.ib = KGSL_CONVERT_TO_MBPS(1000),
+#endif
 	},
 };
 
-#if defined(CONFIG_GPU_OVERCLOCK) || defined(CONFIG_GPU_MAX_OVERCLOCK)
+#ifdef CONFIG_GPU_OVERCLOCK
 static struct msm_bus_vectors grp3d_nominal_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_GRAPHICS_3D,
@@ -143,10 +147,12 @@ static struct kgsl_device_iommu_data kgsl_3d0_iommu_data[] = {
 static struct kgsl_device_platform_data kgsl_3d0_pdata = {
 	.pwrlevel = {
 		{
-#ifdef CONFIG_GPU_MAX_OVERCLOCK
+#if defined(CONFIG_CPU_MAX_OVERCLOCK)
 			.gpu_freq = 487500000,
-#else
+#elif defined(CONFIG_CPU_OVERCLOCK) && !defined(CONFIG_CPU_MAX_OVERCLOCK)
 			.gpu_freq = 450000000,
+#else
+			.gpu_freq = 400000000,
 #endif
 			.bus_freq = 3,
 			.io_fraction = 0,
@@ -195,12 +201,8 @@ void k2_init_gpu(void)
 {
 	unsigned int version = socinfo_get_version();
 
-	
-
 	if (cpu_is_msm8930aa())
 		kgsl_3d0_pdata.pwrlevel[0].gpu_freq = 450000000;
-
-	
 
 	if ((SOCINFO_VERSION_MAJOR(version) == 1) &&
 		(SOCINFO_VERSION_MINOR(version) == 2))

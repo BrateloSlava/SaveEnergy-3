@@ -523,7 +523,11 @@ static struct msm_bus_paths bw_level_tbl[] = {
 	[4] = BW_MBPS(3200), 
 	[5] = BW_MBPS(3600), 
 	[6] = BW_MBPS(3936), 
+#ifdef CONFIG_CPU_OVERCLOCK
+	[7] = BW_MBPS(4280), 
+#else
 	[7] = BW_MBPS(4264), 
+#endif
 };
 
 static struct msm_bus_scale_pdata bus_client_pdata = {

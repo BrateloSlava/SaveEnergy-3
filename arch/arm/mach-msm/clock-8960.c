@@ -3272,6 +3272,7 @@ static struct rcg_clk dsi2_esc_clk = {
 		.ns_val = NS_MND_BANKED4(20, 16, n, m, 3, 0, s##_to_mm_mux), \
 		.ctl_val = CC_BANKED(9, 6, n), \
 	}
+
 static struct clk_freq_tbl clk_tbl_gfx2d[] = {
 	F_GFX2D(        0, gnd,  0,  0),
 	F_GFX2D( 27000000, pxo,  0,  0),
@@ -3284,7 +3285,11 @@ static struct clk_freq_tbl clk_tbl_gfx2d[] = {
 	F_GFX2D(145455000, pll2, 2, 11),
 	F_GFX2D(160000000, pll2, 1,  5),
 	F_GFX2D(177778000, pll2, 2,  9),
+#ifdef CONFIG_GPU_OVERCLOCK
+	F_GFX2D(216000000, pll2, 1,  4),
+#else
 	F_GFX2D(200000000, pll2, 1,  4),
+#endif
 	F_GFX2D(228571000, pll2, 2,  7),
 	F_END
 };
@@ -3414,23 +3419,26 @@ static struct clk_freq_tbl clk_tbl_gfx3d[] = {
 };
 
 static struct clk_freq_tbl clk_tbl_gfx3d_8960[] = {
-	F_GFX3D(        0, gnd,  0,  0),
-	F_GFX3D( 27000000, pxo,  0,  0),
-	F_GFX3D( 48000000, pll8, 1,  8),
-	F_GFX3D( 54857000, pll8, 1,  7),
-	F_GFX3D( 64000000, pll8, 1,  6),
-	F_GFX3D( 76800000, pll8, 1,  5),
-	F_GFX3D( 96000000, pll8, 1,  4),
-	F_GFX3D(128000000, pll8, 1,  3),
-	F_GFX3D(145455000, pll2, 2, 11),
-	F_GFX3D(160000000, pll2, 1,  5),
-	F_GFX3D(177778000, pll2, 2,  9),
-	F_GFX3D(200000000, pll2, 1,  4),
-	F_GFX3D(228571000, pll2, 2,  7),
-	F_GFX3D(266667000, pll2, 1,  3),
-	F_GFX3D(300000000, pll3, 1,  4),
-	F_GFX3D(320000000, pll2, 2,  5),
-	F_GFX3D(400000000, pll2, 1,  2),
+	F_GFX3D(        0, gnd,   0,  0),
+	F_GFX3D( 27000000, pxo,   0,  0),
+	F_GFX3D( 48000000, pll8,  1,  8),
+	F_GFX3D( 54857000, pll8,  1,  7),
+	F_GFX3D( 64000000, pll8,  1,  6),
+	F_GFX3D( 76800000, pll8,  1,  5),
+	F_GFX3D( 96000000, pll8,  1,  4),
+	F_GFX3D(128000000, pll8,  1,  3),
+	F_GFX3D(145455000, pll2,  2, 11),
+	F_GFX3D(160000000, pll2,  1,  5),
+	F_GFX3D(177778000, pll2,  2,  9),
+	F_GFX3D(200000000, pll2,  1,  4),
+	F_GFX3D(228571000, pll2,  2,  7),
+	F_GFX3D(266667000, pll2,  1,  3),
+	F_GFX3D(300000000, pll3,  1,  4),
+	F_GFX3D(320000000, pll2,  2,  5),
+	F_GFX3D(400000000, pll2,  1,  2),
+#ifdef CONFIG_GPU_OVERCLOCK
+	F_GFX3D(450000000, pll15, 1,  2),
+#endif
 	F_END
 };
 
@@ -3495,7 +3503,11 @@ static struct rcg_clk gfx3d_clk = {
 		.dbg_name = "gfx3d_clk",
 		.ops = &clk_ops_rcg,
 		VDD_DIG_FMAX_MAP3(LOW,  128000000, NOMINAL, 300000000,
+#ifdef CONFIG_GPU_OVERCLOCK
+				  HIGH, 408000000),
+#else
 				  HIGH, 400000000),
+#endif
 		CLK_INIT(gfx3d_clk.c),
 		.depends = &gmem_axi_clk.c,
 	},
@@ -3518,7 +3530,11 @@ static struct clk_freq_tbl clk_tbl_vcap[] = {
 	F_VCAP( 76800000, pll8, 1,  5),
 	F_VCAP(128000000, pll8, 1,  3),
 	F_VCAP(160000000, pll2, 1,  5),
+#ifdef CONFIG_GPU_OVERCLOCK
+	F_VCAP(202000000, pll2, 1,  4),
+#else
 	F_VCAP(200000000, pll2, 1,  4),
+#endif
 	F_END
 };
 
