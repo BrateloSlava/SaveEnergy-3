@@ -43,7 +43,7 @@ static struct msm_bus_vectors grp3d_low_vectors[] = {
 		.src = MSM_BUS_MASTER_GRAPHICS_3D,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
 		.ab = 0,
-#ifdef CONFIG_GPU_OVERCLOCK
+#ifdef CONFIG_GPU_MAX_OVERCLOCK
 		.ib = KGSL_CONVERT_TO_MBPS(1096),
 #else
 		.ib = KGSL_CONVERT_TO_MBPS(1000),
@@ -51,7 +51,7 @@ static struct msm_bus_vectors grp3d_low_vectors[] = {
 	},
 };
 
-#ifdef CONFIG_GPU_OVERCLOCK
+#ifdef CONFIG_GPU_MAX_OVERCLOCK
 static struct msm_bus_vectors grp3d_nominal_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_GRAPHICS_3D,
