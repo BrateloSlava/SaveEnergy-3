@@ -45,6 +45,35 @@
 #include <mach/perflock.h>
 #endif
 
+#if defined(CONFIG_CPU_OVERCLOCK) || defined(CONFIG_LOW_CPUCLOCKS)
+
+#if defined(CONFIG_LOW_CPUCLOCKS)
+
+#if defined(CONFIG_CPU_MAX_OVERCLOCK)
+#define MAX_FREQ_STEPS	21
+#elif defined(CONFIG_CPU_OVERCLOCK) && !defined(CONFIG_CPU_MAX_OVERCLOCK)
+#define MAX_FREQ_STEPS	19
+#else
+#define MAX_FREQ_STEPS	16
+#endif
+
+#else // !defined(CONFIG_LOW_CPUCLOCKS)
+
+#if defined(CONFIG_CPU_MAX_OVERCLOCK)
+#define MAX_FREQ_STEPS	17
+#elif defined(CONFIG_CPU_OVERCLOCK) && !defined(CONFIG_CPU_MAX_OVERCLOCK)
+#define MAX_FREQ_STEPS	15
+#else
+#define MAX_FREQ_STEPS	12
+#endif
+
+#endif // defined(CONFIG_LOW_CPUCLOCKS)
+
+#else // !defined(CONFIG_CPU_OVERCLOCK) or !defined(CONFIG_LOW_CPUCLOCKS)
+#define MAX_FREQ_STEPS	30 // default value from stock source
+#endif // defined(CONFIG_CPU_OVERCLOCK) || defined(CONFIG_LOW_CPUCLOCKS)
+
+
 #ifdef pr_err
 #undef pr_err
 #endif
@@ -1910,7 +1939,7 @@ void acpuclk_set_vdd(unsigned int khz, int vdd_uv) {
 #endif
 
 #ifdef CONFIG_CPU_FREQ_MSM
-static struct cpufreq_frequency_table freq_table[NR_CPUS][30];
+static struct cpufreq_frequency_table freq_table[NR_CPUS][MAX_FREQ_STEPS+1];
 
 static void __init cpufreq_table_init(void)
 {
