@@ -14,7 +14,6 @@
 #include <linux/init.h>
 #include <linux/cpufreq.h>
 
-
 int cpufreq_frequency_table_cpuinfo(struct cpufreq_policy *policy,
 				    struct cpufreq_frequency_table *table)
 {
