@@ -1761,6 +1761,12 @@ config INTELLI_PLUG_DUAL
 	help
 	  Special dual-core mode for intelli-plug
 
+config SLEEPY_PLUG
+	bool "Enable sleepy_plug by rmbq"
+	default n
+	help
+	  Not compatible with INTELLI_PLUG
+
 config USERSPACE_VOLTAGE_CONTROL
 	bool "Enable Userspace CPU Voltage Control"
 	default n
@@ -2421,10 +2427,6 @@ config MSM_RUN_QUEUE_STATS
 config MSM_STANDALONE_POWER_COLLAPSE
        bool "Enable standalone power collapse"
        default n
-
-config SLEEPY_PLUG
-	bool "sleepy_plug by rmbq"
-	default n
 
 config MSM_GSBI9_UART
 	bool "Enable GSBI9 UART device"
