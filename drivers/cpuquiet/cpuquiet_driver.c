@@ -38,7 +38,7 @@ unsigned int cpu_core_state[3] = {0, 0, 0};
 static unsigned int min_cpus = 1;
 static unsigned int max_cpus = CONFIG_NR_CPUS;
 
-#define DEFAULT_SCREEN_OFF_CPU_CAP 2
+#define DEFAULT_SCREEN_OFF_CPU_CAP 1
 static unsigned int screen_off_max_cpus = DEFAULT_SCREEN_OFF_CPU_CAP;
 static bool screen_off_cap = true;
 #ifdef CONFIG_HAS_EARLYSUSPEND
