@@ -39,9 +39,9 @@
 #define DEF_SAMPLING_MS			(1000)
 #define BUSY_SAMPLING_MS		(500)
 
-#define DOWN_THRESHOLD			8
-#define UP_THRESHOLD			11
-#define PEAK_THRESHOLD			30
+#define DOWN_THRESHOLD			7
+#define UP_THRESHOLD			10
+#define PEAK_THRESHOLD			25
 
 #define RQ_VALUE_ARRAY_DIM		5
 
