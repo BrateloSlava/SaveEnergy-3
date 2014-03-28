@@ -1969,17 +1969,27 @@ static bool sleeping_prematurely(pg_data_t *pgdat, int order, long remaining,
 	unsigned long balanced = 0;
 	bool all_zones_ok = true;
 
-	
+	/* If kswapd has been running too long, just sleep */
+	if (need_resched())
+		return false;
+
+	/* If a direct reclaimer woke kswapd within HZ/10, it's premature */
 	if (remaining)
 		return true;
 
-	
+	/* Check the watermark levels */
 	for (i = 0; i <= classzone_idx; i++) {
 		struct zone *zone = pgdat->node_zones + i;
 
 		if (!populated_zone(zone))
 			continue;
 
+		/*
+		 * balance_pgdat() skips over all_unreclaimable after
+		 * DEF_PRIORITY. Effectively, it considers them balanced so
+		 * they must be considered balanced here as well if kswapd
+		 * is to sleep
+		 */
 		if (zone->all_unreclaimable) {
 			balanced += zone->present_pages;
 			continue;
@@ -1992,6 +2002,11 @@ static bool sleeping_prematurely(pg_data_t *pgdat, int order, long remaining,
 			balanced += zone->present_pages;
 	}
 
+	/*
+	 * For high-order requests, the balanced zones must contain at least
+	 * 25% of the nodes pages for kswapd to sleep. For order-0, all zones
+	 * must be balanced
+	 */
 	if (order)
 		return !pgdat_balanced(pgdat, balanced, classzone_idx);
 	else
