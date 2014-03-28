@@ -356,9 +356,10 @@ CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 CFLAGS_MODULE   = -Os -fno-pic -munaligned-access
 AFLAGS_MODULE   =
 LDFLAGS_MODULE  = 
-CFLAGS_KERNEL	= -marm -mcpu=cortex-a15 -mtune=cortex-a9 -ftree-vectorize -mtls-dialect=gnu2 -munaligned-access
+CFLAGS_KERNEL	= -marm -mcpu=cortex-a15 -mtune=cortex-a9 -ftree-vectorize -mtls-dialect=gnu2 -munaligned-access -fgcse-lm -fgcse-sm -fsched-spec-load -fsingle-precision-constant -mfpu=neon-vfpv4
 AFLAGS_KERNEL	= 
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
+
 
 # Use LINUXINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
