@@ -29,7 +29,7 @@
 #define CPUFREQ_CAP_TAG                       "[CPUFREQ_CAP]: "
 
 static struct kobject *auto_sysfs_kobject;
-#define DEFAULT_SCREEN_OFF_FREQ_CAP 702000
+#define DEFAULT_SCREEN_OFF_FREQ_CAP 594000
 static unsigned int screen_off_max_freq = DEFAULT_SCREEN_OFF_FREQ_CAP;
 static bool screen_off_cap = true;
 #ifdef CONFIG_HAS_EARLYSUSPEND
@@ -43,7 +43,7 @@ static void cpufreq_early_suspend(struct early_suspend *h)
 	int cpu;
 	
 	if (screen_off_cap){
-		pr_info(CPUFREQ_CAP_TAG "%s: limit freq to %d\n", __func__, screen_off_max_freq);
+		pr_debug(CPUFREQ_CAP_TAG "%s: limit freq to %d\n", __func__, screen_off_max_freq);
 		screen_off_cap_active = true;
 
         for_each_possible_cpu(cpu)
@@ -56,7 +56,7 @@ static void cpufreq_late_resume(struct early_suspend *h)
 	int cpu;
 	
 	if (screen_off_cap){
-		pr_info(CPUFREQ_CAP_TAG "%s: release limit freq to %d\n", __func__, screen_off_max_freq);
+		pr_debug(CPUFREQ_CAP_TAG "%s: release limit freq to %d\n", __func__, screen_off_max_freq);
 		screen_off_cap_active = false;
 
         for_each_possible_cpu(cpu)
