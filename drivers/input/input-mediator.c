@@ -17,6 +17,7 @@
 #include <linux/slab.h>
 #include <linux/device.h>
 #include <linux/input.h>
+#include <linux/synaptics_i2c_rmi.h>
 
 static LIST_HEAD(input_handler_list_primary);
 static LIST_HEAD(input_handler_list_secondary);
@@ -56,6 +57,7 @@ static int input_dev_filter(const char* input_dev_name) {
 	int ret = 0;
 	if (strstr(input_dev_name, "touchscreen")
 			|| strstr(input_dev_name, "-ts")
+			|| strstr(input_dev_name, SYNAPTICS_3200_NAME)
 			|| strstr(input_dev_name, "-keypad")
 			|| strstr(input_dev_name, "-nav")
 			|| strstr(input_dev_name, "-oj")) {
