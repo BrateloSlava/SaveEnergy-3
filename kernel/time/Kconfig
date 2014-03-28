@@ -26,6 +26,10 @@ config HIGH_RES_TIMERS
 	  hardware is not capable then this option only increases
 	  the size of the kernel image.
 
+config TIMER_STATS
+	bool
+	default y
+
 config GENERIC_CLOCKEVENTS_BUILD
 	bool
 	default y
