@@ -24,10 +24,9 @@ static int try_to_freeze_tasks(bool user_only)
 	unsigned int todo;
 	bool wq_busy = false;
 	struct timeval start, end;
-	u64 elapsed_msecs64;
-	unsigned int elapsed_msecs;
+	u64 elapsed_csecs64;
+	unsigned int elapsed_csecs;
 	bool wakeup = false;
-	int sleep_usecs = USEC_PER_MSEC;
 
 	do_gettimeofday(&start);
 
@@ -54,10 +53,6 @@ static int try_to_freeze_tasks(bool user_only)
 			todo += wq_busy;
 		}
 
-		if (todo && has_wake_lock(WAKE_LOCK_SUSPEND)) {
-			wakeup = 1;
-			break;
-		}
 		if (!todo || time_after(jiffies, end_time))
 			break;
 
@@ -66,32 +61,26 @@ static int try_to_freeze_tasks(bool user_only)
 			break;
 		}
 
-		/*
-		 * We need to retry, but first give the freezing tasks some
-		 * time to enter the regrigerator.
-		 */
-		usleep_range(sleep_usecs / 2, sleep_usecs);
-		if (sleep_usecs < 8 * USEC_PER_MSEC)
-			sleep_usecs *= 2;
+		msleep(10);
 	}
 
 	do_gettimeofday(&end);
-	elapsed_msecs64 = timeval_to_ns(&end) - timeval_to_ns(&start);
-	do_div(elapsed_msecs64, NSEC_PER_MSEC);
-	elapsed_msecs = elapsed_msecs64;
+	elapsed_csecs64 = timeval_to_ns(&end) - timeval_to_ns(&start);
+	do_div(elapsed_csecs64, NSEC_PER_SEC / 100);
+	elapsed_csecs = elapsed_csecs64;
 
 	if (todo) {
 		if(wakeup) {
-			pr_debug("\n");
-			pr_debug(KERN_ERR "Freezing of %s aborted\n",
+			printk("\n");
+			printk(KERN_ERR "Freezing of %s aborted\n",
 					user_only ? "user space " : "tasks ");
 		}
 		else {
-			pr_debug("\n");
-		pr_debug(KERN_ERR "Freezing of tasks %s after %d.%03d seconds "
+			printk("\n");
+			printk(KERN_ERR "Freezing of tasks %s after %d.%02d seconds "
 			       "(%d tasks refusing to freeze, wq_busy=%d):\n",
 			       wakeup ? "aborted" : "failed",
-			       elapsed_msecs / 1000, elapsed_msecs % 1000,
+			       elapsed_csecs / 100, elapsed_csecs % 100,
 			       todo - wq_busy, wq_busy);
 		}
 
@@ -104,7 +93,7 @@ static int try_to_freeze_tasks(bool user_only)
 			do_each_thread(g, p) {
 				if (p != current && !freezer_should_skip(p)
 				    && freezing(p) && !frozen(p) &&
-				    elapsed_msecs > 1000)
+				    elapsed_csecs > 100)
 					sched_show_task(p);
 			} while_each_thread(g, p);
 			read_unlock(&tasklist_lock);
@@ -113,8 +102,8 @@ static int try_to_freeze_tasks(bool user_only)
 #endif
 		}
 	} else {
-		pr_debug("(elapsed %d.%03d seconds) ", elapsed_msecs / 1000,
-			elapsed_msecs % 1000);
+		printk("(elapsed %d.%02d seconds) ", elapsed_csecs / 100,
+			elapsed_csecs % 100);
 	}
 
 	return todo ? -EBUSY : 0;
@@ -131,15 +120,15 @@ int freeze_processes(void)
 	if (!pm_freezing)
 		atomic_inc(&system_freezing_cnt);
 
-	pr_debug("Freezing user space processes ... ");
+	printk("Freezing user space processes ... ");
 	pm_freezing = true;
 	error = try_to_freeze_tasks(true);
 	if (!error) {
-		pr_debug("done.");
+		printk("done.");
 		__usermodehelper_set_disable_depth(UMH_DISABLED);
 		oom_killer_disable();
 	}
-	pr_debug("\n");
+	printk("\n");
 	BUG_ON(in_atomic());
 
 	if (error)
@@ -151,17 +140,17 @@ int freeze_kernel_threads(void)
 {
 	int error;
 
-	error = suspend_sys_sync_wait();
+	error = sys_sync();
 	if (error)
 		return error;
 
-	pr_debug("Freezing remaining freezable tasks ... ");
+	printk("Freezing remaining freezable tasks ... ");
 	pm_nosig_freezing = true;
 	error = try_to_freeze_tasks(false);
 	if (!error)
-		pr_debug("done.");
+		printk("done.");
 
-	pr_debug("\n");
+	printk("\n");
 	BUG_ON(in_atomic());
 
 	if (error)
@@ -180,7 +169,7 @@ void thaw_processes(void)
 
 	oom_killer_enable();
 
-	pr_debug("Restarting tasks ... ");
+	printk("Restarting tasks ... ");
 
 	thaw_workqueues();
 
@@ -193,7 +182,7 @@ void thaw_processes(void)
 	usermodehelper_enable();
 
 	schedule();
-	pr_debug("done.\n");
+	printk("done.\n");
 }
 
 void thaw_kernel_threads(void)
@@ -201,7 +190,7 @@ void thaw_kernel_threads(void)
 	struct task_struct *g, *p;
 
 	pm_nosig_freezing = false;
-	pr_debug("Restarting kernel threads ... ");
+	printk("Restarting kernel threads ... ");
 
 	thaw_workqueues();
 
@@ -213,5 +202,5 @@ void thaw_kernel_threads(void)
 	read_unlock(&tasklist_lock);
 
 	schedule();
-	pr_debug("done.\n");
+	printk("done.\n");
 }
