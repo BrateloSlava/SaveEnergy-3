@@ -1656,10 +1656,10 @@ static int acpuclk_8960_set_rate(int cpu, unsigned long rate,
 
 	if (reason == SETRATE_CPUFREQ) {
 		if (cpu_is_offline(cpu)) {
-			pr_info("don't change frequency for an offline CPU%d\n", cpu);
+			pr_debug("don't change frequency for an offline CPU%d\n", cpu);
 			return 0;
 		} else if (smp_processor_id() != cpu) {
-			pr_info("CPU%d don't change frequency for CPU%d\n", smp_processor_id(), cpu);
+			pr_debug("CPU%d don't change frequency for CPU%d\n", smp_processor_id(), cpu);
 			return 0;
 		}
 	}
@@ -1711,10 +1711,10 @@ static int acpuclk_8960_set_rate(int cpu, unsigned long rate,
 
 	if (reason == SETRATE_CPUFREQ) {
 		if (cpu_is_offline(cpu)) {
-			pr_info("don't set_speed for an offline CPU%d\n", cpu);
+			pr_debug("don't set_speed for an offline CPU%d\n", cpu);
 			goto out;
 		} else if (smp_processor_id() != cpu) {
-			pr_info("CPU%d don't set_speed for CPU%d\n", smp_processor_id(), cpu);
+			pr_debug("CPU%d don't set_speed for CPU%d\n", smp_processor_id(), cpu);
 			goto out;
 		}
 	}
@@ -1967,7 +1967,7 @@ static void __init cpufreq_table_init(void)
 		freq_table[cpu][freq_cnt].index = freq_cnt;
 		freq_table[cpu][freq_cnt].frequency = CPUFREQ_TABLE_END;
 
-		pr_info("CPU%d: %d scaling frequencies supported.\n",
+		pr_debug("CPU%d: %d scaling frequencies supported.\n",
 			cpu, freq_cnt);
 
 		
@@ -2000,7 +2000,7 @@ static int __cpuinit acpuclock_cpu_callback(struct notifier_block *nfb,
 	case CPU_DEAD:
 	case CPU_DEAD_FROZEN:
 		prev_khz[cpu] = acpuclk_8960_get_rate(cpu);
-		pr_info("CPU%d unplug, freq = %d\n", cpu, prev_khz[cpu]);
+		pr_debug("CPU%d unplug, freq = %d\n", cpu, prev_khz[cpu]);
 		
 	case CPU_UP_CANCELED:
 	case CPU_UP_CANCELED_FROZEN:
@@ -2018,7 +2018,7 @@ static int __cpuinit acpuclock_cpu_callback(struct notifier_block *nfb,
 					      SETRATE_HOTPLUG);
 		if (!scalable[cpu].regulators_initialized)
 			regulator_init(cpu, max_acpu_level);
-		pr_info("CPU%d hotplug prepare, freq = %d\n", cpu, prev_khz[cpu]);
+		pr_debug("CPU%d hotplug prepare, freq = %d\n", cpu, prev_khz[cpu]);
 		break;
 	case CPU_STARTING:
 	case CPU_STARTING_FROZEN:
@@ -2030,7 +2030,7 @@ static int __cpuinit acpuclock_cpu_callback(struct notifier_block *nfb,
 		}
 		break;
 	case CPU_ONLINE:
-		pr_info("CPU%d hotplug done, freq = %d\n", cpu, prev_khz[cpu]);
+		pr_debug("CPU%d hotplug done, freq = %d\n", cpu, prev_khz[cpu]);
 	default:
 		break;
 	}
@@ -2046,7 +2046,7 @@ static const int krait_needs_vmin(void)
 {
 	unsigned int cpuid = read_cpuid_id();
 
-	pr_info("%s: cpuid is 0x%x\n", __func__, cpuid);
+	pr_debug("%s: cpuid is 0x%x\n", __func__, cpuid);
 	switch (cpuid) {
 	case 0x511F04D0:
 	case 0x511F04D1:
@@ -2080,15 +2080,15 @@ static enum pvs __init get_pvs(void)
 
 	
 	if(kernel_flag & KERNEL_FLAG_PVS_SLOW_CPU){
-		pr_info("ACPU PVS: Force SLOW by writeconfig\n");
+		pr_debug("ACPU PVS: Force SLOW by writeconfig\n");
 		return PVS_SLOW;
 	}
 	else if (kernel_flag & KERNEL_FLAG_PVS_NOM_CPU){
-		pr_info("ACPU PVS: Force NOMINAL by writeconfig\n");
+		pr_debug("ACPU PVS: Force NOMINAL by writeconfig\n");
 		return PVS_NOM;
 	}
 	else if (kernel_flag & KERNEL_FLAG_PVS_FAST_CPU){
-		pr_info("ACPU PVS: Force FAST by writeconfig\n");
+		pr_debug("ACPU PVS: Force FAST by writeconfig\n");
 		return PVS_FAST;
 	}
 
@@ -2100,17 +2100,17 @@ static enum pvs __init get_pvs(void)
 	switch (pvs) {
 	case 0x0:
 	case 0x7:
-		pr_info("ACPU PVS: Slow\n");
+		pr_debug("ACPU PVS: Slow\n");
 		return PVS_SLOW;
 	case 0x1:
-		pr_info("ACPU PVS: Nominal\n");
+		pr_debug("ACPU PVS: Nominal\n");
 		return PVS_NOM;
 	case 0x3:
-		pr_info("ACPU PVS: Fast\n");
+		pr_debug("ACPU PVS: Fast\n");
 		return PVS_FAST;
 	case 0x4:
 		if (cpu_is_apq8064()) {
-			pr_info("ACPU PVS: Faster\n");
+			pr_debug("ACPU PVS: Faster\n");
 			return  PVS_FASTER;
 		}
 	default:
@@ -2130,9 +2130,9 @@ static int __init get_pvs_bin(void)
 
 	if (pvs_bin == 0x7) {
 		pvs_bin = 0;
-		pr_info("ACPU PVS: Defaulting to %d\n", pvs_bin);
+		pr_debug("ACPU PVS: Defaulting to %d\n", pvs_bin);
 	} else {
-		pr_info("ACPU PVS: %d\n", pvs_bin);
+		pr_debug("ACPU PVS: %d\n", pvs_bin);
 	}
 
 	return pvs_bin;
@@ -2149,9 +2149,9 @@ int __init get_speed_bin(void)
 
 	if (speed_bin == 0xF) {
 		speed_bin = 0;
-		pr_info("SPEED BIN: Defaulting to %d\n", speed_bin);
+		pr_debug("SPEED BIN: Defaulting to %d\n", speed_bin);
 	} else {
-		pr_info("SPEED BIN: %d\n", speed_bin);
+		pr_debug("SPEED BIN: %d\n", speed_bin);
 	}
 
 	return speed_bin;
@@ -2241,10 +2241,10 @@ static void __init select_freq_plan(void)
 	}
 	BUG_ON(!acpu_freq_tbl);
 	if (krait_needs_vmin()) {
-		pr_info("Applying min 1.15v fix for Krait Errata 26\n");
+		pr_debug("Applying min 1.15v fix for Krait Errata 26\n");
 		kraitv2_apply_vmin(acpu_freq_tbl);
 	} else {
-		pr_info("No need to apply min 1.15v fix for Krait Errata 26\n");
+		pr_debug("No need to apply min 1.15v fix for Krait Errata 26\n");
 	}
 
 	
@@ -2267,7 +2267,7 @@ static void __init select_freq_plan(void)
 #endif
 			max_acpu_level = l;
 	BUG_ON(!max_acpu_level);
-	pr_info("Max ACPU freq: %u KHz\n", max_acpu_level->speed.khz);
+	pr_debug("Max ACPU freq: %u KHz\n", max_acpu_level->speed.khz);
 }
 
 static struct acpuclk_data acpuclk_8960_data = {
