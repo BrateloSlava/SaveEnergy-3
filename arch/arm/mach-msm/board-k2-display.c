@@ -1127,8 +1127,8 @@ static void k2_set_cabc(struct msm_fb_data_type *mfd, int mode)
 #endif
 #endif
 
-#define BRI_SETTING_MIN                 20
-#define BRI_SETTING_DEF                 120
+#define BRI_SETTING_MIN                 30
+#define BRI_SETTING_DEF                 143
 #define BRI_SETTING_MAX                 255
 
 static unsigned char k2_shrink_pwm(int val)
@@ -1141,7 +1141,7 @@ static unsigned char k2_shrink_pwm(int val)
         else
            pwm_min = 17;
 
-        pwm_default = 109;
+        pwm_default = 92;
         pwm_max = 255;
 
 	if (val <= 0) {
