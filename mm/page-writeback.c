@@ -326,7 +326,12 @@ static void bdi_writeout_fraction(struct backing_dev_info *bdi,
 				numerator, denominator);
 }
 
-static unsigned int bdi_min_ratio;
+/*
+ * bdi_min_ratio keeps the sum of the minimum dirty shares of all
+ * registered backing devices, which, for obvious reasons, can not
+ * exceed 100%.
+ */
+static unsigned int bdi_min_ratio = 5;
 
 int bdi_set_min_ratio(struct backing_dev_info *bdi, unsigned int min_ratio)
 {
@@ -857,16 +862,16 @@ static unsigned long dirty_poll_interval(unsigned long dirty,
 	return 1;
 }
 
-static unsigned long bdi_max_pause(struct backing_dev_info *bdi,
-				   unsigned long bdi_dirty)
+static long bdi_max_pause(struct backing_dev_info *bdi,
+			  unsigned long bdi_dirty)
 {
-	unsigned long bw = bdi->avg_write_bandwidth;
-	unsigned long t;
+	long bw = bdi->avg_write_bandwidth;
+	long t;
 
 	t = bdi_dirty / (1 + bw / roundup_pow_of_two(1 + HZ / 8));
 	t++;
 
-	return min_t(unsigned long, t, MAX_PAUSE);
+	return min_t(long, t, MAX_PAUSE);
 }
 
 static long bdi_min_pause(struct backing_dev_info *bdi,
