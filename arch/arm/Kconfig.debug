@@ -314,7 +314,7 @@ config ARM_KPROBES_TEST
 	tristate "Kprobes test module"
 	depends on KPROBES && MODULES
 	help
-	  Perform tests of kprobes API and instruction set simulation.
+	  Perform tests of kprobes API and instruction set simulation
 
 config PID_IN_CONTEXTIDR
 	bool "Write the current PID to the CONTEXTIDR register"

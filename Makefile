@@ -1541,7 +1541,7 @@ quiet_cmd_depmod = DEPMOD  $(KERNELRELEASE)
                    $(KERNELRELEASE)
 
 # Create temporary dir for module support files
-# clean it up only when building all modules
+# clean it up only when building all modules.
 cmd_crmodverdir = $(Q)mkdir -p $(MODVERDIR) \
                   $(if $(KBUILD_MODULES),; rm -f $(MODVERDIR)/*)
 
