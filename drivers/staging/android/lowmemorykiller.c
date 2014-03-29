@@ -40,9 +40,13 @@
 #include <linux/mutex.h>
 #include <linux/delay.h>
 #include <linux/swap.h>
-#if defined (CONFIG_SWAP) && (defined (CONFIG_ZSWAP) || defined (CONFIG_ZRAM))
-#include <linux/fs.h>
+
+#ifdef CONFIG_HIGHMEM
+	#define _ZONE ZONE_HIGHMEM
+#else
+	#define _ZONE ZONE_NORMAL
 #endif
+
 
 extern void show_meminfo(void);
 static uint32_t lowmem_debug_level = 2;
@@ -75,6 +79,8 @@ static size_t minfree_tmp[6] = {0, 0, 0, 0, 0, 0};
 static unsigned long lowmem_deathpending_timeout;
 static unsigned long lowmem_fork_boost_timeout;
 static uint32_t lowmem_fork_boost = 0;
+static uint32_t lowmem_sleep_ms = 1;
+static uint32_t lowmem_only_kswapd_sleep = 1;
 
 #define lowmem_print(level, x...)			\
 	do {						\
@@ -149,32 +155,33 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	int array_size = ARRAY_SIZE(lowmem_adj);
 	int other_free;
 	int other_file;
+	int reserved_free = 0;
 	unsigned long nr_to_scan = sc->nr_to_scan;
 	int fork_boost = 0;
 	size_t *min_array;
-#if defined (CONFIG_SWAP) && (defined (CONFIG_ZSWAP) || defined (CONFIG_ZRAM))
-	struct sysinfo si;
-#endif
+	struct zone *zone;
 
 	if (nr_to_scan > 0) {
 		if (!mutex_trylock(&scan_mutex)) {
-			msleep_interruptible(1);
+			if (!(lowmem_only_kswapd_sleep && !current_is_kswapd())) {
+				msleep_interruptible(lowmem_sleep_ms);
+			}
 			return 0;
 		}
 	}
 
-#if defined (CONFIG_SWAP) && (defined (CONFIG_ZSWAP) || defined (CONFIG_ZRAM))
-	si_swapinfo(&si);
+	for_each_zone(zone)
+	{
+		if(is_normal(zone))
+		{
+			reserved_free = zone->watermark[WMARK_MIN] + zone->lowmem_reserve[_ZONE];
+			break;
+		}
+	}
+
 	other_free = global_page_state(NR_FREE_PAGES);
 	other_file = global_page_state(NR_FILE_PAGES) -
-						global_page_state(NR_SHMEM) - global_page_state(NR_MLOCK) +
-						(si.totalswap >> 2) -
-						total_swapcache_pages;
-#else
-	other_free = global_page_state(NR_FREE_PAGES);
-	other_file = global_page_state(NR_FILE_PAGES) -
-		global_page_state(NR_SHMEM) - global_page_state(NR_MLOCK);
-#endif
+		global_page_state(NR_SHMEM) - global_page_state(NR_MLOCK) ;
 
 	if (lowmem_fork_boost &&
 		time_before_eq(jiffies, lowmem_fork_boost_timeout)) {
@@ -191,7 +198,7 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		array_size = lowmem_minfree_size;
 
 	for (i = 0; i < array_size; i++) {
-		if (other_free < min_array[i] &&
+		if ((other_free - reserved_free) < min_array[i] &&
 		    other_file < min_array[i]) {
 			min_score_adj = lowmem_adj[i];
 			fork_boost = lowmem_fork_boost_minfree[i];
@@ -200,14 +207,21 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	}
 
 	if (nr_to_scan > 0)
-		lowmem_print(3, "lowmem_shrink %lu, %x, ofree %d %d, ma %d\n",
+		lowmem_print(3, "lowmem_shrink %lu, %x, ofree %d %d, ma %d, rfree %d\n",
 				nr_to_scan, sc->gfp_mask, other_free,
-				other_file, min_score_adj);
+				other_file, min_score_adj, reserved_free);
 	rem = global_page_state(NR_ACTIVE_ANON) +
 		global_page_state(NR_ACTIVE_FILE) +
 		global_page_state(NR_INACTIVE_ANON) +
 		global_page_state(NR_INACTIVE_FILE);
-	if (nr_to_scan <= 0 || min_score_adj == OOM_SCORE_ADJ_MAX + 1) {
+
+	if (sc->nr_to_scan <= 0 && min_score_adj == OOM_SCORE_ADJ_MAX + 1) {
+		lowmem_print(5, "lowmem_shrink %lu, %x, not shrinking\n",
+			     sc->nr_to_scan, sc->gfp_mask);
+		return 0;
+	}
+
+	if (sc->nr_to_scan <= 0) {
 		lowmem_print(5, "lowmem_shrink %lu, %x, return %d\n",
 			     nr_to_scan, sc->gfp_mask, rem);
 
@@ -228,9 +242,13 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 
 		if (time_before_eq(jiffies, lowmem_deathpending_timeout)) {
 			if (test_task_flag(tsk, TIF_MEMDIE)) {
+				lowmem_print(2, "skipping , waiting for process %d (%s) dead\n",
+				tsk->pid, tsk->comm);
 				rcu_read_unlock();
 				
-				msleep_interruptible(20);
+				if (!(lowmem_only_kswapd_sleep && !current_is_kswapd())) {
+					msleep_interruptible(lowmem_sleep_ms);
+				}
 				mutex_unlock(&scan_mutex);
 				return 0;
 			}
@@ -240,6 +258,14 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		if (!p)
 			continue;
 
+		if (test_tsk_thread_flag(p, TIF_MEMDIE) &&
+		    time_before_eq(jiffies, lowmem_deathpending_timeout)) {
+			lowmem_print(2, "%d (%s), oom_adj %d score_adj %d, is exiting, return\n"
+					, p->pid, p->comm, p->signal->oom_adj, p->signal->oom_score_adj);
+			task_unlock(p);
+			rcu_read_unlock();
+			return rem;
+		}
 		oom_score_adj = p->signal->oom_score_adj;
 		if (oom_score_adj < min_score_adj) {
 			task_unlock(p);
@@ -265,11 +291,12 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	}
 	if (selected) {
 		lowmem_print(1, "[%s] send sigkill to %d (%s), oom_adj %d, score_adj %d,"
-			" min_score_adj %d, size %dK, free %dK, file %dK, fork_boost %dK\n",
+			" min_score_adj %d, size %dK, free %dK, file %dK, fork_boost %dK,"
+			" reserved_free %dK\n",
 			     current->comm, selected->pid, selected->comm,
 			     selected_oom_adj, selected_oom_score_adj,
 			     min_score_adj, selected_tasksize << 2,
-			     other_free << 2, other_file << 2, fork_boost << 2);
+			     other_free << 2, other_file << 2, fork_boost << 2, reserved_free << 2);
 		lowmem_deathpending_timeout = jiffies + HZ;
 		if (selected_oom_adj < 7)
 		{
@@ -279,9 +306,11 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		send_sig(SIGKILL, selected, 0);
 		set_tsk_thread_flag(selected, TIF_MEMDIE);
 		rem -= selected_tasksize;
-		rcu_read_unlock();
-		
-		msleep_interruptible(20);
+	} else {
+		rem = -1;
+		if (!(lowmem_only_kswapd_sleep && !current_is_kswapd())) {
+			msleep_interruptible(lowmem_sleep_ms);
+		}
 	}
 	else
 		rcu_read_unlock();
