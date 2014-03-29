@@ -91,7 +91,7 @@ static int k2_detect_panel(const char *name)
 	if (!strncmp(name, MIPI_VIDEO_NOVATEK_WVGA_PANEL_NAME,
 			strnlen(MIPI_VIDEO_NOVATEK_WVGA_PANEL_NAME,
 			PANEL_NAME_MAX_LEN))) {
-		PR_DISP_INFO("%s: Support (%s)\n",__func__, name);
+		PR_DISP_DEBUG("%s: Support (%s)\n",__func__, name);
 		return 0;
 	}
 
@@ -121,7 +121,7 @@ void __init k2_allocate_fb_region(void)
 	addr = alloc_bootmem_align(size, 0x1000);
 	msm_fb_resources[0].start = __pa(addr);
 	msm_fb_resources[0].end = msm_fb_resources[0].start + size - 1;
-	pr_info("allocating %lu bytes at %p (%lx physical) for fb\n",
+	pr_debug("allocating %lu bytes at %p (%lx physical) for fb\n",
 			size, addr, __pa(addr));
 }
 
@@ -285,7 +285,7 @@ static int mipi_dsi_panel_power(int on)
 	static struct regulator *reg_l2;
 	int rc;
 
-	PR_DISP_INFO("%s: power %s.\n", __func__, on ? "on" : "off");
+	PR_DISP_DEBUG("%s: power %s.\n", __func__, on ? "on" : "off");
 
 	if (!dsi_power_on) {
 		
@@ -964,7 +964,7 @@ static int k2_lcd_on(struct platform_device *pdev)
 		return 0;
 	}
 
-	PR_DISP_INFO("Display On.\n");
+	PR_DISP_DEBUG("Display On.\n");
 
 	mipi_dsi_cmds_tx(&k2_panel_tx_buf, init_on_cmds,
 		init_on_cmds_count);
@@ -1063,7 +1063,7 @@ static void k2_display_off(struct msm_fb_data_type *mfd)
 
 	mipi_dsi_cmdlist_put(&cmdreq);
 
-	PR_DISP_INFO("%s\n", __func__);
+	PR_DISP_DEBUG("%s\n", __func__);
 }
 
 #ifdef NOVATEK_CABC
@@ -1157,7 +1157,7 @@ static unsigned char k2_shrink_pwm(int val)
 	} else if (val > BRI_SETTING_MAX)
 			shrink_br = pwm_max;
 
-	PR_DISP_INFO("brightness orig=%d, transformed=%d\n", val, shrink_br);
+	PR_DISP_DEBUG("brightness orig=%d, transformed=%d\n", val, shrink_br);
 
 	return shrink_br;
 }
@@ -1413,25 +1413,25 @@ static int __init mipi_video_novatek_wvga_pt_init(void)
 		pr_err("%s: failed to register device!\n", __func__);
 
 	if (panel_type == PANEL_ID_K2_WL_AUO) {
-		PR_DISP_INFO("%s: panel_type=PANEL_ID_K2_WL_AUO\n", __func__);
+		PR_DISP_DEBUG("%s: panel_type=PANEL_ID_K2_WL_AUO\n", __func__);
 		init_on_cmds = k2_auo_display_on_cmds;
 		init_on_cmds_count = ARRAY_SIZE(k2_auo_display_on_cmds);
 		display_off_cmds = k2_auo_display_off_cmds;
 		display_off_cmds_count = ARRAY_SIZE(k2_auo_display_off_cmds);
 	} else if (panel_type == PANEL_ID_K2_WL_AUO_C2) {
-		PR_DISP_INFO("%s: panel_type=PANEL_ID_K2_WL_AUO_C2\n", __func__);
+		PR_DISP_DEBUG("%s: panel_type=PANEL_ID_K2_WL_AUO_C2\n", __func__);
 		init_on_cmds = k2_auo_display_on_cmds_c2;
 		init_on_cmds_count = ARRAY_SIZE(k2_auo_display_on_cmds_c2);
 		display_off_cmds = k2_auo_display_off_cmds;
 		display_off_cmds_count = ARRAY_SIZE(k2_auo_display_off_cmds);
 	} else if (panel_type == PANEL_ID_K2_WL_JDI_NT) {
-		PR_DISP_INFO("%s: panel_type=PANEL_ID_K2_WL_JDI\n", __func__);
+		PR_DISP_DEBUG("%s: panel_type=PANEL_ID_K2_WL_JDI\n", __func__);
 		init_on_cmds = k2_jdi_display_on_cmds;
 		init_on_cmds_count = ARRAY_SIZE(k2_jdi_display_on_cmds);
 		display_off_cmds = k2_jdi_display_off_cmds;
 		display_off_cmds_count = ARRAY_SIZE(k2_jdi_display_off_cmds);
 	} else if (panel_type == PANEL_ID_K2_WL_JDI_NT_T02) {
-		PR_DISP_INFO("%s: panel_type=PANEL_ID_K2_WL_JDI_T02\n", __func__);
+		PR_DISP_DEBUG("%s: panel_type=PANEL_ID_K2_WL_JDI_T02\n", __func__);
 		init_on_cmds = k2_jdi_display_on_cmds;
 		init_on_cmds_count = ARRAY_SIZE(k2_jdi_display_on_cmds);
 		display_off_cmds = k2_jdi_display_off_cmds;
@@ -1458,12 +1458,12 @@ void __init k2_init_fb(void)
 static int __init k2_init_panel(void)
 {
 	if(panel_type == PANEL_ID_NONE) {
-		PR_DISP_INFO("%s panel ID = PANEL_ID_NONE\n", __func__);
+		PR_DISP_DEBUG("%s panel ID = PANEL_ID_NONE\n", __func__);
 		return 0;
 	}
 
 	led_trigger_register_simple("bkl_trigger", &bkl_led_trigger);
-	pr_info("%s: SUCCESS (WLED TRIGGER)\n", __func__);
+	pr_debug("%s: SUCCESS (WLED TRIGGER)\n", __func__);
 	wled_trigger_initialized = 1;
 	atomic_set(&lcd_power_state, 1);
 
