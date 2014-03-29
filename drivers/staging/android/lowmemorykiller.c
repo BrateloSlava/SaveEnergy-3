@@ -40,16 +40,19 @@
 #include <linux/mutex.h>
 #include <linux/delay.h>
 #include <linux/swap.h>
+#if defined (CONFIG_SWAP) && (defined (CONFIG_ZSWAP) || defined (CONFIG_ZRAM))
+#include <linux/fs.h>
+#endif
 
 #ifdef CONFIG_HIGHMEM
-	#define _ZONE ZONE_HIGHMEM
+#define _ZONE ZONE_HIGHMEM
 #else
-	#define _ZONE ZONE_NORMAL
+#define _ZONE ZONE_NORMAL
 #endif
 
 
 extern void show_meminfo(void);
-static uint32_t lowmem_debug_level = 2;
+static uint32_t lowmem_debug_level = 1;
 static int lowmem_adj[6] = {
 	0,
 	1,
@@ -58,10 +61,10 @@ static int lowmem_adj[6] = {
 };
 static int lowmem_adj_size = 4;
 static int lowmem_minfree[6] = {
-	3 * 512,	
-	2 * 1024,	
-	4 * 1024,	
-	16 * 1024,	
+	3 * 512,	/* 6MB */
+	2 * 1024,	/* 8MB */
+	4 * 1024,	/* 16MB */
+	16 * 1024,	/* 64MB */
 };
 static int lowmem_minfree_size = 4;
 
@@ -160,6 +163,9 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	int fork_boost = 0;
 	size_t *min_array;
 	struct zone *zone;
+#if defined (CONFIG_SWAP) && (defined (CONFIG_ZSWAP) || defined (CONFIG_ZRAM))
+	struct sysinfo si;
+#endif
 
 	if (nr_to_scan > 0) {
 		if (!mutex_trylock(&scan_mutex)) {
@@ -179,9 +185,18 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		}
 	}
 
+#if defined (CONFIG_SWAP) && (defined (CONFIG_ZSWAP) || defined (CONFIG_ZRAM))
+	si_swapinfo(&si);
+	other_free = global_page_state(NR_FREE_PAGES);
+	other_file = global_page_state(NR_FILE_PAGES) -
+						global_page_state(NR_SHMEM) - global_page_state(NR_MLOCK) +
+						(si.totalswap >> 2) -
+						total_swapcache_pages;
+#else
 	other_free = global_page_state(NR_FREE_PAGES);
 	other_file = global_page_state(NR_FILE_PAGES) -
 		global_page_state(NR_SHMEM) - global_page_state(NR_MLOCK) ;
+#endif
 
 	if (lowmem_fork_boost &&
 		time_before_eq(jiffies, lowmem_fork_boost_timeout)) {
