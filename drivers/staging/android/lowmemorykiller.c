@@ -214,14 +214,7 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		global_page_state(NR_ACTIVE_FILE) +
 		global_page_state(NR_INACTIVE_ANON) +
 		global_page_state(NR_INACTIVE_FILE);
-
-	if (sc->nr_to_scan <= 0 && min_score_adj == OOM_SCORE_ADJ_MAX + 1) {
-		lowmem_print(5, "lowmem_shrink %lu, %x, not shrinking\n",
-			     sc->nr_to_scan, sc->gfp_mask);
-		return 0;
-	}
-
-	if (sc->nr_to_scan <= 0) {
+	if (nr_to_scan <= 0 || min_score_adj == OOM_SCORE_ADJ_MAX + 1) {
 		lowmem_print(5, "lowmem_shrink %lu, %x, return %d\n",
 			     nr_to_scan, sc->gfp_mask, rem);
 
@@ -258,14 +251,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		if (!p)
 			continue;
 
-		if (test_tsk_thread_flag(p, TIF_MEMDIE) &&
-		    time_before_eq(jiffies, lowmem_deathpending_timeout)) {
-			lowmem_print(2, "%d (%s), oom_adj %d score_adj %d, is exiting, return\n"
-					, p->pid, p->comm, p->signal->oom_adj, p->signal->oom_score_adj);
-			task_unlock(p);
-			rcu_read_unlock();
-			return rem;
-		}
 		oom_score_adj = p->signal->oom_score_adj;
 		if (oom_score_adj < min_score_adj) {
 			task_unlock(p);
@@ -306,8 +291,8 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		send_sig(SIGKILL, selected, 0);
 		set_tsk_thread_flag(selected, TIF_MEMDIE);
 		rem -= selected_tasksize;
-	} else {
-		rem = -1;
+		rcu_read_unlock();
+		
 		if (!(lowmem_only_kswapd_sleep && !current_is_kswapd())) {
 			msleep_interruptible(lowmem_sleep_ms);
 		}
