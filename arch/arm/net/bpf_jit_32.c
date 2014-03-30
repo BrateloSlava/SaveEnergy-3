@@ -42,7 +42,7 @@
 #define r_skb_hl	ARM_R8
 
 #define SCRATCH_SP_OFFSET	0
-#define SCRATCH_OFF(k)		(SCRATCH_SP_OFFSET + (k))
+#define SCRATCH_OFF(k)		(SCRATCH_SP_OFFSET + 4 * (k))
 
 #define SEEN_MEM		((1 << BPF_MEMWORDS) - 1)
 #define SEEN_MEM_WORD(k)	(1 << (k))
@@ -338,10 +338,17 @@ static void emit_load_be16(u8 cond, u8 r_res, u8 r_addr, struct jit_ctx *ctx)
 
 static inline void emit_swap16(u8 r_dst, u8 r_src, struct jit_ctx *ctx)
 {
-	emit(ARM_LSL_R(ARM_R1, r_src, 8), ctx);
-	emit(ARM_ORR_S(r_dst, ARM_R1, r_src, SRTYPE_LSL, 8), ctx);
-	emit(ARM_LSL_I(r_dst, r_dst, 8), ctx);
-	emit(ARM_LSL_R(r_dst, r_dst, 8), ctx);
+	/* r_dst = (r_src << 8) | (r_src >> 8) */
+	emit(ARM_LSL_I(ARM_R1, r_src, 8), ctx);
+	emit(ARM_ORR_S(r_dst, ARM_R1, r_src, SRTYPE_LSR, 8), ctx);
+
+	/*
+	 * we need to mask out the bits set in r_dst[23:16] due to
+	 * the first shift instruction.
+	 *
+	 * note that 0x8ff is the encoded immediate 0x00ff0000.
+	 */
+	emit(ARM_BIC_I(r_dst, r_dst, 0x8ff), ctx);
 }
 
 #else  /* ARMv6+ */
@@ -840,7 +847,7 @@ void bpf_jit_compile(struct sk_filter *fp)
 	ctx.skf		= fp;
 	ctx.ret0_fp_idx = -1;
 
-	ctx.offsets = kzalloc(GFP_KERNEL, 4 * (ctx.skf->len + 1));
+	ctx.offsets = kzalloc(4 * (ctx.skf->len + 1), GFP_KERNEL);
 	if (ctx.offsets == NULL)
 		return;
 
@@ -859,7 +866,7 @@ void bpf_jit_compile(struct sk_filter *fp)
 
 	ctx.idx += ctx.imm_count;
 	if (ctx.imm_count) {
-		ctx.imms = kzalloc(GFP_KERNEL, 4 * ctx.imm_count);
+		ctx.imms = kzalloc(4 * ctx.imm_count, GFP_KERNEL);
 		if (ctx.imms == NULL)
 			goto out;
 	}
