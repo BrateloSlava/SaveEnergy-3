@@ -287,6 +287,11 @@ obj-$(CONFIG_MSM_CPU_PWRCTL) +=  msm_cpu_pwrctl.o
 else
 obj-$(CONFIG_ARCH_MSM8960) += acpuclock-8960.o
 endif
+
+obj-$(CONFIG_HAS_MACH_MEMUTILS) += memutils/
+
+obj-$(CONFIG_ARCH_RANDOM) += early_random.o
+
 obj-$(CONFIG_ARCH_MSM8960) += memory_topology.o
 obj-$(CONFIG_ARCH_MSM8960) += saw-regulator.o
 obj-$(CONFIG_ARCH_MSM8960) += devices-8960.o htc_wifi_nvs.o devices_htc.o htc_awb_cal.o
