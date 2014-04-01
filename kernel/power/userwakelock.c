@@ -86,7 +86,7 @@ static struct user_wake_lock *lookup_wake_lock_name(
 		if (!diff && l->name[name_len])
 			diff = -1;
 		if (debug_mask & DEBUG_ERROR)
-			pr_info("lookup_wake_lock_name: compare %.*s %s %d\n",
+			pr_debug("lookup_wake_lock_name: compare %.*s %s %d\n",
 				name_len, buf, l->name, diff);
 
 		if (diff < 0)
@@ -100,7 +100,7 @@ static struct user_wake_lock *lookup_wake_lock_name(
 	
 	if (!allocate) {
 		if (debug_mask & DEBUG_ERROR)
-			pr_info("lookup_wake_lock_name: %.*s not found\n",
+			pr_debug("lookup_wake_lock_name: %.*s not found\n",
 				name_len, buf);
 		return ERR_PTR(-EINVAL);
 	}
@@ -113,7 +113,7 @@ static struct user_wake_lock *lookup_wake_lock_name(
 	}
 	memcpy(l->name, buf, name_len);
 	if (debug_mask & DEBUG_NEW)
-		pr_info("lookup_wake_lock_name: new wake lock %s\n", l->name);
+		pr_debug("lookup_wake_lock_name: new wake lock %s\n", l->name);
 	wake_lock_init(&l->wake_lock, WAKE_LOCK_SUSPEND, l->name);
 	rb_link_node(&l->node, parent, p);
 	rb_insert_color(&l->node, &user_wake_locks);
@@ -121,7 +121,7 @@ static struct user_wake_lock *lookup_wake_lock_name(
 
 bad_arg:
 	if (debug_mask & DEBUG_ERROR)
-		pr_info("lookup_wake_lock_name: wake lock, %.*s, bad arg, %s\n",
+		pr_debug("lookup_wake_lock_name: wake lock, %.*s, bad arg, %s\n",
 			name_len, buf, arg);
 	return ERR_PTR(-EINVAL);
 }
@@ -162,7 +162,7 @@ ssize_t wake_lock_store(
 	}
 
 	if (debug_mask & DEBUG_ACCESS)
-		pr_info("wake_lock_store: %s, timeout %ld\n", l->name, timeout);
+		pr_debug("wake_lock_store: %s, timeout %ld\n", l->name, timeout);
 
 	if (timeout)
 		wake_lock_timeout(&l->wake_lock, timeout);
@@ -209,7 +209,7 @@ ssize_t wake_unlock_store(
 	}
 
 	if (debug_mask & DEBUG_ACCESS)
-		pr_info("wake_unlock_store: %s\n", l->name);
+		pr_debug("wake_unlock_store: %s\n", l->name);
 
 	wake_unlock(&l->wake_lock);
 not_found:
