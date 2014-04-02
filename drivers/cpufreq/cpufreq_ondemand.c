@@ -1296,7 +1296,7 @@ if (dbs_tuners_ins.gboost) {
 			dbs_tuners_ins.up_threshold = old_up_threshold;
 	}
 	if (g_count > 40) {
-		boost_min_freq(1134000);
+		boost_min_freq(1080000);
 	}
 }
 //end
