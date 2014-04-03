@@ -23,6 +23,7 @@
 #include <linux/slab.h>
 
 #include "cpuquiet.h"
+#include <linux/synaptics_i2c_rmi.h>
 
 LIST_HEAD(cpuquiet_governors);
 struct cpuquiet_governor *cpuquiet_curr_governor;
@@ -190,6 +191,7 @@ static void cpuquiet_input_event(struct input_handle *handle, unsigned int type,
 static int input_dev_filter(const char* input_dev_name) {
 	int ret = 0;
 	if (strstr(input_dev_name, "touchscreen")
+			|| strstr(input_dev_name, SYNAPTICS_3200_NAME)
 			|| strstr(input_dev_name, "-ts")
 			|| strstr(input_dev_name, "-keypad")
 			|| strstr(input_dev_name, "-nav")
