@@ -1088,13 +1088,13 @@ void thermal_zone_device_update(struct thermal_zone_device *tz)
 		goto leave;
 	}
 
-	pr_info("%s: Current temperature (%ld C)\n",tz->device.kobj.name, temp/denominator);
+	pr_debug("%s: Current temperature (%ld C)\n",tz->device.kobj.name, temp/denominator);
 
 	for (count = 0; count < tz->trips; count++) {
 		tz->ops->get_trip_type(tz, count, &trip_type);
 		tz->ops->get_trip_temp(tz, count, &trip_temp);
 
-		pr_info("trip_temp:%ld, type:%d\n", trip_temp/denominator, trip_type);
+		pr_debug("trip_temp:%ld, type:%d\n", trip_temp/denominator, trip_type);
 
 		switch (trip_type) {
 		case THERMAL_TRIP_CRITICAL:
@@ -1103,7 +1103,7 @@ void thermal_zone_device_update(struct thermal_zone_device *tz)
 					ret = tz->ops->notify(tz, count,
 							      trip_type);
 				if (!ret) {
-					pr_info("%s:%s: current temp(%ld) higher or equal max limit temp(%ld)\n",
+					pr_debug("%s:%s: current temp(%ld) higher or equal max limit temp(%ld)\n",
 						__func__, tz->device.kobj.name, temp/denominator, trip_temp/denominator);
 #if defined(CONFIG_THERMAL_MAX_TEMP_PROTECT)
 					pr_emerg("Critical temperature reached (%ld C), shutting down\n",
@@ -1414,7 +1414,7 @@ int thermal_generate_netlink_event(u32 orig, enum events event)
 
 	result = genlmsg_multicast(skb, 0, thermal_event_mcgrp.id, GFP_ATOMIC);
 	if (result)
-		pr_info("failed to send netlink event:%d\n", result);
+		pr_debug("failed to send netlink event:%d\n", result);
 
 	return result;
 }

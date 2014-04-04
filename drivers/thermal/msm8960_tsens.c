@@ -290,7 +290,7 @@ static int tsens_tz_set_mode(struct thermal_zone_device *thermal,
 		mask = 1 << (tm_sensor->sensor_num + TSENS_SENSOR0_SHIFT);
 		if (mode == THERMAL_DEVICE_ENABLED) {
 			if ((mask != SENSOR0_EN) && !(reg & SENSOR0_EN)) {
-				pr_info("Main sensor not enabled\n");
+				pr_debug("Main sensor not enabled\n");
 				return -EINVAL;
 			}
 			writel_relaxed(reg | TSENS_SW_RST, TSENS_CNTL_ADDR);
@@ -450,7 +450,7 @@ static int tsens_tz_activate_trip_type(struct thermal_zone_device *thermal,
 			writel_relaxed(reg_cntl | mask, TSENS_CNTL_ADDR);
 	} else {
 		if (code < lo_code || code > hi_code) {
-			pr_info("%s with invalid code %x\n", __func__, code);
+			pr_debug("%s with invalid code %x\n", __func__, code);
 			return -EINVAL;
 		}
 		if (tmdev->hw_type == APQ_8064)
@@ -624,7 +624,7 @@ static void monitor_tsens_status(struct work_struct *work)
 	int_status = readl_relaxed(TSENS_INT_STATUS_ADDR);
 	config = readl_relaxed(TSENS_8960_CONFIG_ADDR);
 
-	pr_info("TSENS_CNTL_ADDR[0x%08X], TSENS_THRESHOLD_ADDR[0x%08X], TSENS_INT_STATUS_ADDR[0x%08X], TSENS_8960_CONFIG_ADDR[0x%08X]\n", cntl, threshold, int_status, config);
+	pr_debug("TSENS_CNTL_ADDR[0x%08X], TSENS_THRESHOLD_ADDR[0x%08X], TSENS_INT_STATUS_ADDR[0x%08X], TSENS_8960_CONFIG_ADDR[0x%08X]\n", cntl, threshold, int_status, config);
 
 	if (tmdev->hw_type == APQ_8064)
 		cntl &= (uint32_t) TSENS_8064_SENSORS_EN;
@@ -644,16 +644,16 @@ static void monitor_tsens_status(struct work_struct *work)
 
 		enable = cntl & (0x1 << i);
 		if(enable > 0)
-			pr_info("Sensor %d = %d C\n", i, tsens_tz_code_to_degC(code, i));
+			pr_debug("Sensor %d = %d C\n", i, tsens_tz_code_to_degC(code, i));
 	}
 
 	if (tmdev->patherm0 > 0) {
 		rc = pm8xxx_adc_read(tmdev->patherm0, &result);
-		pr_info("pa_therm0 = %lld C\n", result.physical);
+		pr_debug("pa_therm0 = %lld C\n", result.physical);
 	}
 	if (tmdev->patherm1 > 0) {
 		rc = pm8xxx_adc_read(tmdev->patherm1, &result);
-		pr_info("pa_therm1 = %lld C\n", result.physical);
+		pr_debug("pa_therm1 = %lld C\n", result.physical);
 	}
 
 	if (monitor_tsense_wq) {
@@ -895,7 +895,7 @@ static void tsens_hw_init(void)
 		tsens_max_limit_th = tsens_tz_degC_to_code(TSENS_MAX_LIMIT_TEMP, sort_max);
 
 		for (i = 0; i < tmdev->tsens_num_sensor; i++) {
-			pr_info("%s: sensor[%d] min_threshold %d, max_threshold %d\n",  __func__, i,
+			pr_debug("%s: sensor[%d] min_threshold %d, max_threshold %d\n",  __func__, i,
 				tsens_tz_code_to_degC(tsens_min_limit_th, i), tsens_tz_code_to_degC(tsens_max_limit_th,i));
 		}
 	}
@@ -1065,7 +1065,7 @@ int msm_tsens_early_init(struct tsens_platform_data *pdata)
 	if (monitor_tsense_wq == NULL) {
 		
 		monitor_tsense_wq = create_workqueue("monitor_tsense_wq");
-		printk(KERN_INFO "Create monitor tsense workqueue(0x%x)...\n", (unsigned int)monitor_tsense_wq);
+		pr_debug(KERN_INFO "Create monitor tsense workqueue(0x%x)...\n", (unsigned int)monitor_tsense_wq);
 	}
 	if (monitor_tsense_wq) {
 		INIT_DELAYED_WORK(&monitor_tsens_status_worker, monitor_tsens_status);
@@ -1082,7 +1082,7 @@ static int __devinit tsens_tm_probe(struct platform_device *pdev)
 	int rc, i;
 
 	if (!tmdev) {
-		pr_info("%s : TSENS early init not done.\n", __func__);
+		pr_debug("%s : TSENS early init not done.\n", __func__);
 		return -EFAULT;
 	}
 

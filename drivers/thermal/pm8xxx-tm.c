@@ -624,7 +624,7 @@ static int __devinit pm8xxx_tm_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, chip);
 
-	pr_info("OK\n");
+	pr_debug("OK\n");
 
 	return 0;
 
