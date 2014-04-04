@@ -76,7 +76,7 @@ static int store_workqueue(const char *wq_name, unsigned long f_addr)
 		if (!wq_history_flag)
 			sprint_symbol(func_sym, f_addr);
 
-		printk(KERN_INFO "[wq] %s: %s\n", wq_name, func_sym);
+		pr_debug(KERN_INFO "[wq] %s: %s\n", wq_name, func_sym);
 #endif
 		if (++wq_pos >= WQ_HIST_LEN)
 			wq_pos = 0;
@@ -93,7 +93,7 @@ int print_workqueue(void)
 	i = wq_pos_cur = wq_pos;
 	do {
 		sprint_symbol(func_sym, wq_hist[i]);
-		printk(KERN_INFO "[wq_list] %s[%d]: %s\n", WQ_NAME, count--, func_sym);
+		pr_debug(KERN_INFO "[wq_list] %s[%d]: %s\n", WQ_NAME, count--, func_sym);
 
 		if (--i < 0)
 			i = WQ_HIST_LEN - 1;
@@ -1340,10 +1340,10 @@ __acquires(&gcwq->lock)
 	lock_map_release(&cwq->wq->lockdep_map);
 
 	if (unlikely(in_atomic() || lockdep_depth(current) > 0)) {
-		printk(KERN_ERR "BUG: workqueue leaked lock or atomic: "
+		pr_debug(KERN_ERR "BUG: workqueue leaked lock or atomic: "
 		       "%s/0x%08x/%d\n",
 		       current->comm, preempt_count(), task_pid_nr(current));
-		printk(KERN_ERR "    last function: ");
+		pr_debug(KERN_ERR "    last function: ");
 		print_symbol("%s\n", (unsigned long)f);
 		debug_show_held_locks(current);
 		dump_stack();
@@ -2007,7 +2007,7 @@ static int wq_clamp_max_active(int max_active, unsigned int flags,
 	int lim = flags & WQ_UNBOUND ? WQ_UNBOUND_MAX_ACTIVE : WQ_MAX_ACTIVE;
 
 	if (max_active < 1 || max_active > lim)
-		printk(KERN_WARNING "workqueue: max_active %d requested for %s "
+		pr_debug(KERN_WARNING "workqueue: max_active %d requested for %s "
 		       "is out of range, clamping between %d and %d\n",
 		       max_active, name, 1, lim);
 
@@ -2636,7 +2636,7 @@ void show_pending_work_on_gcwq(void)
 		struct global_cwq *gcwq = get_gcwq(cpu);
 
 		list_for_each_entry(work, &gcwq->worklist, entry) {
-			printk("CPU%d pending work : %pf\n", cpu, work->func);
+			pr_debug("CPU%d pending work : %pf\n", cpu, work->func);
 		}
 	}
 }

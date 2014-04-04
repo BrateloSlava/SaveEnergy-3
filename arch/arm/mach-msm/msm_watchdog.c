@@ -176,15 +176,15 @@ void msm_watchdog_check_pet(unsigned long long timestamp)
 	if (timestamp - last_pet > (unsigned long long)NSEC_PER_THRESHOLD) {
 		if (timestamp - last_pet_check > (unsigned long long)NSEC_PER_SEC) {
 			last_pet_check = timestamp;
-			pr_info("\n%s: MSM watchdog was blocked for more than %d seconds!\n",
+			pr_debug("\n%s: MSM watchdog was blocked for more than %d seconds!\n",
 				__func__, pet_check_counter++);
-			pr_info("%s: Prepare to dump stack...\n",
+			pr_debug("%s: Prepare to dump stack...\n",
 				__func__);
 			dump_stack();
-			pr_info("%s: Prepare to dump pending works on global workqueue...\n",
+			pr_debug("%s: Prepare to dump pending works on global workqueue...\n",
 				__func__);
 //			show_pending_work_on_gcwq();
-			pr_info("\n ### Show Blocked State ###\n");
+			pr_debug("\n ### Show Blocked State ###\n");
 			show_state_filter(TASK_UNINTERRUPTIBLE);
 		}
 	}
@@ -200,7 +200,7 @@ int msm_watchdog_suspend(struct device *dev)
 	__raw_writel(0, msm_tmr0_base + WDT0_EN);
 	mb();
 	set_WDT_EN_footprint(0);
-	printk(KERN_DEBUG "msm_watchdog_suspend\n");
+	pr_debug(KERN_DEBUG "msm_watchdog_suspend\n");
 	return 0;
 }
 EXPORT_SYMBOL(msm_watchdog_suspend);
@@ -216,7 +216,7 @@ int msm_watchdog_resume(struct device *dev)
 	mb();
 	set_dog_pet_footprint();
 	set_WDT_EN_footprint(1);
-	printk(KERN_DEBUG "msm_watchdog_resume\n");
+	pr_debug(KERN_DEBUG "msm_watchdog_resume\n");
 	mb();
 	return 0;
 }
@@ -228,7 +228,7 @@ static void msm_watchdog_stop(void)
 		__raw_writel(1, msm_tmr0_base + WDT0_RST);
 		__raw_writel(0, msm_tmr0_base + WDT0_EN);
 		set_WDT_EN_footprint(0);
-		printk(KERN_INFO "msm_watchdog_stop");
+		pr_debug(KERN_INFO "msm_watchdog_stop");
 	}
 }
 
@@ -280,7 +280,7 @@ static void wdog_disable_work(struct work_struct *work)
 	
 	__raw_writel(0, msm_tmr0_base + WDT0_EN);
 	complete(&work_data->complete);
-	pr_info("MSM Watchdog deactivated.\n");
+	pr_debug("MSM Watchdog deactivated.\n");
 }
 
 static int wdog_enable_set(const char *val, struct kernel_param *kp)
@@ -291,7 +291,7 @@ static int wdog_enable_set(const char *val, struct kernel_param *kp)
 
 	mutex_lock(&disable_lock);
 	if (!enable) {
-		printk(KERN_INFO "MSM Watchdog is not active.\n");
+		pr_debug(KERN_INFO "MSM Watchdog is not active.\n");
 		ret = -EINVAL;
 		goto done;
 	}
@@ -376,7 +376,7 @@ static int msm_watchdog_remove(struct platform_device *pdev)
 		
 		__raw_writel(0, msm_tmr0_base + WDT0_EN);
 	}
-	printk(KERN_INFO "MSM Watchdog Exit - Deactivated\n");
+	pr_debug(KERN_INFO "MSM Watchdog Exit - Deactivated\n");
 	return 0;
 }
 
@@ -391,11 +391,11 @@ static irqreturn_t wdog_bark_handler(int irq, void *dev_id)
 		return IRQ_HANDLED;
 
 	nanosec_rem = do_div(t, 1000000000);
-	printk(KERN_INFO "[K] Watchdog bark! Now = %lu.%06lu\n", (unsigned long) t,
+	pr_debug(KERN_INFO "[K] Watchdog bark! Now = %lu.%06lu\n", (unsigned long) t,
 		nanosec_rem / 1000);
 
 	nanosec_rem = do_div(last_pet, 1000000000);
-	printk(KERN_INFO "[K] Watchdog last pet at %lu.%06lu\n", (unsigned long)
+	pr_debug(KERN_INFO "[K] Watchdog last pet at %lu.%06lu\n", (unsigned long)
 		last_pet, nanosec_rem / 1000);
 
 	if (print_all_stacks) {
@@ -413,16 +413,16 @@ static irqreturn_t wdog_bark_handler(int irq, void *dev_id)
 
 		dump_stack();
 
-		printk(KERN_INFO "Stack trace dump:\n");
+		pr_debug(KERN_INFO "Stack trace dump:\n");
 
 		for_each_process(tsk) {
-			printk(KERN_INFO "\nPID: %d, Name: %s\n",
+			pr_debug(KERN_INFO "\nPID: %d, Name: %s\n",
 				tsk->pid, tsk->comm);
 			show_stack(tsk, NULL);
 		}
 
 		
-		printk(KERN_INFO "\n### Show Blocked State ###\n");
+		pr_debug(KERN_INFO "\n### Show Blocked State ###\n");
 		show_state_filter(TASK_UNINTERRUPTIBLE);
 #ifdef TRACING_WORKQUEUE_HISTORY
 		print_workqueue();
@@ -455,10 +455,10 @@ static void configure_bark_dump(void)
 			       "Registers won't be dumped on a dog "
 			       "bite\n");
 		else
-			pr_info("%s: dogbark processed by TZ side, regsave address = 0x%X\n",
+			pr_debug("%s: dogbark processed by TZ side, regsave address = 0x%X\n",
 					__func__, cmd_buf.addr);
 	} else
-		pr_info("%s: dogbark processed by apps side\n", __func__);
+		pr_debug("%s: dogbark processed by apps side\n", __func__);
 }
 
 struct fiq_handler wdog_fh = {
@@ -482,7 +482,7 @@ static void set_bark_bite_time(u64 timeout, int wait)
 		pr_err("%s: error setting WDT0_BARK_TIME to %llu. value is = %d\n",
 			__func__, bark_time, __raw_readl(msm_tmr0_base + WDT0_BARK_TIME));
 	} else {
-		pr_info("%s: successfully set WDT0_BARK_TIME to %llu in %d milliseconds!\n",
+		pr_debug("%s: successfully set WDT0_BARK_TIME to %llu in %d milliseconds!\n",
 			__func__, bark_time, wait - counter);
 	}
 
@@ -498,7 +498,7 @@ static void set_bark_bite_time(u64 timeout, int wait)
 		pr_err("%s: error setting WDT0_BITE_TIME to %llu. value is = %d\n",
 			__func__, bite_time, __raw_readl(msm_tmr0_base + WDT0_BITE_TIME));
 	} else {
-		pr_info("%s: successfully set WDT0_BITE_TIME to %llu in %d milliseconds!\n",
+		pr_debug("%s: successfully set WDT0_BITE_TIME to %llu in %d milliseconds!\n",
 			__func__, bite_time, wait - counter);
 	}
 }
@@ -519,7 +519,7 @@ static void init_watchdog_work(struct work_struct *work)
 		set_fiq_handler(&msm_wdog_fiq_start, msm_wdog_fiq_length);
 		stack = (void *)__get_free_pages(GFP_KERNEL, THREAD_SIZE_ORDER);
 		if (!stack) {
-			pr_info("No free pages available - %s fails\n",
+			pr_debug("No free pages available - %s fails\n",
 					__func__);
 			return;
 		}
@@ -567,7 +567,7 @@ static void init_watchdog_work(struct work_struct *work)
 
 	htc_watchdog_monitor_init();
 
-	printk(KERN_INFO "MSM Watchdog Initialized\n");
+	pr_debug(KERN_INFO "MSM Watchdog Initialized\n");
 
 	return;
 }
@@ -585,7 +585,7 @@ static int msm_watchdog_probe(struct platform_device *pdev)
 	if (!enable || !pdata || !pdata->pet_time || !pdata->bark_time) {
 		
 		msm_watchdog_stop();
-		printk(KERN_INFO "MSM Watchdog Not Initialized\n");
+		pr_debug(KERN_INFO "MSM Watchdog Not Initialized\n");
 		return -ENODEV;
 	}
 
