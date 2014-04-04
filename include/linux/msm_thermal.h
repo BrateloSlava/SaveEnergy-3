@@ -17,31 +17,37 @@
 struct msm_thermal_data {
 	uint32_t sensor_id;
 	uint32_t poll_ms;
+#ifdef CONFIG_INTELLI_THERMAL
 	int32_t limit_temp_degC;
 	int32_t temp_hysteresis_degC;
 	uint32_t freq_step;
-#ifdef CONFIG_INTELLI_THERMAL
 	uint32_t freq_control_mask;
-#endif
 	int32_t core_limit_temp_degC;
 	int32_t core_temp_hysteresis_degC;
 	uint32_t core_control_mask;
+#else
+	uint32_t limit_temp;
+	uint32_t temp_hysteresis;
+	uint32_t limit_freq;
+#endif
 };
 
-#if defined(CONFIG_THERMAL_MONITOR)
+#if defined(CONFIG_THERMAL_MONITOR) || defined(CONFIG_INTELLI_THERMAL)
 extern int msm_thermal_init(struct msm_thermal_data *pdata);
+#ifdef CONFIG_THERMAL_MONITOR
 extern int msm_thermal_device_init(void);
-#elif defined(CONFIG_INTELLI_THERMAL)
-extern int msm_thermal_init(struct msm_thermal_data *pdata);
+#endif
 #else
 static inline int msm_thermal_init(struct msm_thermal_data *pdata)
 {
 	return -ENOSYS;
 }
+#ifdef CONFIG_THERMAL_MONITOR
 static inline int msm_thermal_device_init(void)
 {
 	return -ENOSYS;
 }
+#endif
 #endif
 
 #endif 
