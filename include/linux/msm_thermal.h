@@ -32,6 +32,12 @@ struct msm_thermal_data {
 #endif
 };
 
+#ifdef CONFIG_INTELLI_THERMAL
+#define DEFAULT_POLLING_MS	500
+#else
+#define DEFAULT_POLLING_MS	250
+#endif
+
 #if defined(CONFIG_THERMAL_MONITOR) || defined(CONFIG_INTELLI_THERMAL)
 extern int msm_thermal_init(struct msm_thermal_data *pdata);
 #ifdef CONFIG_THERMAL_MONITOR
