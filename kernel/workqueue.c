@@ -2517,8 +2517,11 @@ void freeze_workqueues_begin(void)
 		gcwq->flags |= GCWQ_FREEZING;
 
 		list_for_each_entry(wq, &workqueues, list) {
-			struct cpu_workqueue_struct *cwq = get_cwq(cpu, wq);
-
+			struct cpu_workqueue_struct *cwq;
+			if (cpu < CONFIG_NR_CPUS)
+                                cwq = get_cwq(cpu, wq);
+                        else
+                                continue;
 			if (cwq && wq->flags & WQ_FREEZABLE)
 				cwq->max_active = 0;
 		}
@@ -2541,7 +2544,11 @@ bool freeze_workqueues_busy(void)
 	for_each_gcwq_cpu(cpu) {
 		struct workqueue_struct *wq;
 		list_for_each_entry(wq, &workqueues, list) {
-			struct cpu_workqueue_struct *cwq = get_cwq(cpu, wq);
+			struct cpu_workqueue_struct *cwq;
+			if (cpu < CONFIG_NR_CPUS)
+                                cwq = get_cwq(cpu, wq);
+                        else
+                                continue;
 
 			if (!cwq || !(wq->flags & WQ_FREEZABLE))
 				continue;
@@ -2619,6 +2626,7 @@ unsigned long get_work_func_of_task_struct(struct task_struct *tsk)
 	return 0;
 }
 
+#if 0
 void show_pending_work_on_gcwq(void)
 {
 	struct work_struct *work;
@@ -2633,6 +2641,7 @@ void show_pending_work_on_gcwq(void)
 	}
 }
 EXPORT_SYMBOL(show_pending_work_on_gcwq);
+#endif
 
 static int __init init_workqueues(void)
 {
