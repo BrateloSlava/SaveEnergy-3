@@ -325,11 +325,13 @@ static int mdp_hist_lut_write_off(struct mdp_hist_lut_data *data,
 		pr_err("%s: Error copying histogram data", __func__);
 		return -ENOMEM;
 	}
+	mdp_clk_ctrl(1);
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
 	for (i = 0; i < MDP_HIST_LUT_SIZE; i++)
 		MDP_OUTP(MDP_BASE + base + offset + (0x400*(sel)) + (4*i),
 				element[i]);
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
+	mdp_clk_ctrl(0);
 
 	return 0;
 }
@@ -518,7 +520,9 @@ static int mdp_lut_update_nonlcdc(struct fb_info *info, struct fb_cmap *cmap)
 	int ret;
 
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
+	mdp_clk_ctrl(1);
 	ret = mdp_lut_hw_update(cmap);
+	mdp_clk_ctrl(0);
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
 
 	if (ret)
@@ -540,9 +544,11 @@ static int mdp_lut_update_lcdc(struct fb_info *info, struct fb_cmap *cmap)
 	uint32_t out;
 
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
+	mdp_clk_ctrl(1);
 	ret = mdp_lut_hw_update(cmap);
 
 	if (ret) {
+		mdp_clk_ctrl(0);
 		mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
 		return ret;
 	}
@@ -550,11 +556,87 @@ static int mdp_lut_update_lcdc(struct fb_info *info, struct fb_cmap *cmap)
 	
 	out = inpdw(MDP_BASE + 0x90070) & ~((0x1 << 10) | 0x7);
 	MDP_OUTP(MDP_BASE + 0x90070, (mdp_lut_i << 10) | 0x7 | out);
+	mdp_clk_ctrl(0);
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
 	mdp_lut_i = (mdp_lut_i + 1)%2;
 
 	return 0;
 }
+
+#ifdef CONFIG_UPDATE_LCDC_LUT
+int mdp_preset_lut_update_lcdc(struct fb_cmap *cmap, uint32_t *internal_lut)
+{
+	uint32_t out;
+	int i;
+	u16 r, g, b;
+
+	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
+	mdp_clk_ctrl(1);
+
+	for (i = 0; i < cmap->len; i++) {
+		r = lut2r(internal_lut[i]);
+		g = lut2g(internal_lut[i]);
+		b = lut2b(internal_lut[i]);
+#ifdef CONFIG_LCD_KCAL
+		r = scaled_by_kcal(r, *(cmap->red));
+		g = scaled_by_kcal(g, *(cmap->green));
+		b = scaled_by_kcal(b, *(cmap->blue));
+#endif
+		MDP_OUTP(MDP_BASE + 0x94800 +
+			(0x400*mdp_lut_i) + cmap->start*4 + i*4,
+				((g & 0xff) |
+				 ((b & 0xff) << 8) |
+				 ((r & 0xff) << 16)));
+	}
+
+	
+	out = inpdw(MDP_BASE + 0x90070) & ~((0x1 << 10) | 0x7);
+	MDP_OUTP(MDP_BASE + 0x90070, (mdp_lut_i << 10) | 0x7 | out);
+	mdp_clk_ctrl(0);
+	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
+	mdp_lut_i = (mdp_lut_i + 1)%2;
+
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_UPDATE_LCDC_LUT
+int mdp_preset_lut_update_lcdc(struct fb_cmap *cmap, uint32_t *internal_lut)
+{
+	uint32_t out;
+	int i;
+	u16 r, g, b;
+
+	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
+	mdp_clk_ctrl(1);
+
+	for (i = 0; i < cmap->len; i++) {
+		r = lut2r(internal_lut[i]);
+		g = lut2g(internal_lut[i]);
+		b = lut2b(internal_lut[i]);
+
+		r = scaled_by_kcal(r, *(cmap->red));
+		g = scaled_by_kcal(g, *(cmap->green));
+		b = scaled_by_kcal(b, *(cmap->blue));
+
+		MDP_OUTP(MDP_BASE + 0x94800 +
+			(0x400*mdp_lut_i) + cmap->start*4 + i*4,
+				((g & 0xff) |
+				 ((b & 0xff) << 8) |
+				 ((r & 0xff) << 16)));
+	}
+
+
+	out = inpdw(MDP_BASE + 0x90070) & ~((0x1 << 10) | 0x7);
+	MDP_OUTP(MDP_BASE + 0x90070, (mdp_lut_i << 10) | 0x7 | out);
+	mdp_clk_ctrl(0);
+	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
+	mdp_lut_i = (mdp_lut_i + 1)%2;
+
+	return 0;
+}
+EXPORT_SYMBOL(mdp_preset_lut_update_lcdc);
+#endif
 
 static void mdp_lut_enable(void)
 {
@@ -816,6 +898,7 @@ static int mdp_histogram_enable(struct mdp_hist_mgmt *mgmt)
 		return -EINVAL;
 	}
 
+	mdp_clk_ctrl(1);
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
 	base = (uint32_t) (MDP_BASE + mgmt->base);
 	
@@ -858,6 +941,7 @@ static int mdp_histogram_enable(struct mdp_hist_mgmt *mgmt)
 	mgmt->mdp_is_hist_init = FALSE;
 	__mdp_histogram_reset(mgmt);
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
+	mdp_clk_ctrl(0);
 	return 0;
 }
 
@@ -876,6 +960,7 @@ static int mdp_histogram_disable(struct mdp_hist_mgmt *mgmt)
 
 	base = (uint32_t) (MDP_BASE + mgmt->base);
 
+	mdp_clk_ctrl(1);
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
 	spin_lock_irqsave(&mdp_spin_lock, flag);
 	outp32(MDP_INTR_CLEAR, mgmt->intr);
@@ -892,6 +977,7 @@ static int mdp_histogram_disable(struct mdp_hist_mgmt *mgmt)
 
 	MDP_OUTP(base + 0x0018, INTR_HIST_DONE | INTR_HIST_RESET_SEQ_DONE);
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
+	mdp_clk_ctrl(0);
 
 	if (mgmt->hist != NULL) {
 		mgmt->hist = NULL;
@@ -1066,6 +1152,7 @@ static int _mdp_histogram_read_dma_data(struct mdp_hist_mgmt *mgmt)
 	}
 
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
+	mdp_clk_ctrl(1);
 	for (i = 0; i < mgmt->num_bins; i++) {
 		mgmt->c0[i] = inpdw(mdp_hist_base + r_data_offset + (4*i));
 		mgmt->c1[i] = inpdw(mdp_hist_base + g_data_offset + (4*i));
@@ -1081,6 +1168,7 @@ static int _mdp_histogram_read_dma_data(struct mdp_hist_mgmt *mgmt)
 		} else
 			ret = -ENOMEM;
 	}
+	mdp_clk_ctrl(0);
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
 
 	if (!ret)
@@ -1115,6 +1203,7 @@ static int _mdp_histogram_read_vg_data(struct mdp_hist_mgmt *mgmt)
 	}
 
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
+	mdp_clk_ctrl(1);
 	for (i = 0; i < mgmt->num_bins; i++)
 		mgmt->c0[i] = inpdw(mdp_hist_base + MDP_HIST_DATA_LUMA_OFF +
 									(4*i));
@@ -1126,6 +1215,7 @@ static int _mdp_histogram_read_vg_data(struct mdp_hist_mgmt *mgmt)
 		} else
 			ret = -ENOMEM;
 	}
+	mdp_clk_ctrl(0);
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
 
 	if (!ret)
@@ -1193,12 +1283,14 @@ static void mdp_hist_read_work(struct work_struct *data)
 	if (mgmt->mdp_is_hist_init == FALSE)
 			mgmt->mdp_is_hist_init = TRUE;
 
+	mdp_clk_ctrl(1);
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
 	if (!ret && !initial)
 		__mdp_histogram_kickoff(mgmt);
 	else
 		__mdp_histogram_reset(mgmt);
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
+	mdp_clk_ctrl(0);
 
 error:
 	mutex_unlock(&mgmt->mdp_hist_mutex);
