@@ -356,7 +356,8 @@ CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 CFLAGS_MODULE   = -Os -fno-pic -munaligned-access
 AFLAGS_MODULE   =
 LDFLAGS_MODULE  = 
-CFLAGS_KERNEL	= -marm -mcpu=cortex-a15 -mtune=cortex-a9 -ftree-vectorize -mtls-dialect=gnu2 -munaligned-access -fgcse-lm -fgcse-sm -fsched-spec-load -fsingle-precision-constant -mfpu=neon-vfpv4
+#CFLAGS_KERNEL	= -marm -mcpu=cortex-a15 -mtune=cortex-a9 -ftree-vectorize -mtls-dialect=gnu2 -munaligned-access -fgcse-lm -fgcse-sm -fsched-spec-load -fsingle-precision-constant -mfpu=neon-vfpv4
+CFLAGS_KERNEL	= -fgcse-lm -fgcse-sm -fsched-spec-load -ffast-math -fsingle-precision-constant -mtune=cortex-a15 -mfpu=neon-vfpv4
 AFLAGS_KERNEL	= 
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
@@ -567,7 +568,10 @@ all: vmlinux
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os -falign-functions -falign-jumps -falign-loops -falign-labels -freorder-blocks
 else
-KBUILD_CFLAGS	+= -O2 -fno-reorder-blocks-and-partition -funswitch-loops -fpredictive-commoning -fgcse-after-reload -ftree-vectorize
+#KBUILD_CFLAGS	+= -O2 -fno-reorder-blocks-and-partition -funswitch-loops -fpredictive-commoning -fgcse-after-reload -ftree-vectorize
+#KBUILD_CFLAGS	+= -O3
+KBUILD_CFLAGS	+= -O2 -fvect-cost-model=unlimited -ftree-partial-pre -funswitch-loops -fpredictive-commoning -fgcse-after-reload -ftree-vectorize \
+			-fira-loop-pressure
 endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
@@ -1541,7 +1545,7 @@ quiet_cmd_depmod = DEPMOD  $(KERNELRELEASE)
                    $(KERNELRELEASE)
 
 # Create temporary dir for module support files
-# clean it up only when building all modules.
+# clean it up only when building all modules
 cmd_crmodverdir = $(Q)mkdir -p $(MODVERDIR) \
                   $(if $(KBUILD_MODULES),; rm -f $(MODVERDIR)/*)
 
