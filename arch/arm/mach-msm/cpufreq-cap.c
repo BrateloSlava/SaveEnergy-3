@@ -29,7 +29,7 @@
 #define CPUFREQ_CAP_TAG                       "[CPUFREQ_CAP]: "
 
 static struct kobject *auto_sysfs_kobject;
-#define DEFAULT_SCREEN_OFF_FREQ_CAP 594000
+#define DEFAULT_SCREEN_OFF_FREQ_CAP 702000
 static unsigned int screen_off_max_freq = DEFAULT_SCREEN_OFF_FREQ_CAP;
 static bool screen_off_cap = true;
 #ifdef CONFIG_HAS_EARLYSUSPEND
