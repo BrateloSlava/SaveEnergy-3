@@ -38,14 +38,16 @@
 #include <linux/kthread.h>
 #include <linux/wait.h>
 
+#ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
+#include <linux/mfd/pm8xxx/vibrator.h>
+#include <linux/wakelock.h>
+#endif
+
 #define SYN_I2C_RETRY_TIMES 10
 #define SYN_UPDATE_RETRY_TIMES 5
 #define SHIFT_BITS 10
 #define SYN_WIRELESS_DEBUG
 #define SYN_CALIBRATION_CONTROL
-
-#define MAX_PRESSURE 65535
-#define MAX_WIDTH 30
 
 //#define ENABLE_SYNAPTICS_3K_LOGGING
 #undef ENABLE_SYNAPTICS_3K_LOGGING
@@ -179,6 +181,8 @@ bool scr_suspended = false, exec_count = true;
 bool scr_on_touch = false, barrier[2] = {false, false};
 static struct input_dev * sweep2wake_pwrdev;
 static DEFINE_MUTEX(pwrkeyworklock);
+static int wakesleep_vib = 0;
+static int vib_strength = 15;
 
 extern uint8_t touchscreen_is_on(void) {
 	if (scr_suspended == false) {
@@ -216,6 +220,10 @@ static void sweep2wake_presspwr(struct work_struct * sweep2wake_presspwr_work) {
 		input_sync(sweep2wake_pwrdev); 
 		msleep(80);
 		mutex_unlock(&pwrkeyworklock);
+		if (wakesleep_vib) {
+		        vibrate(vib_strength);
+			wakesleep_vib = 0;
+		}
 		return;
 	}
 }
@@ -226,6 +234,69 @@ void sweep2wake_pwrtrigger(void) {
 	schedule_work(&sweep2wake_presspwr_work);
         return;
 }
+static int __init get_s2w_opt(char *s2w)
+{
+	if (strcmp(s2w, "0") == 0) {
+		s2w_switch = 0;
+	} else if (strcmp(s2w, "1") == 0) {
+		s2w_switch = 1;
+	} else if (strcmp(s2w, "2") == 0) {
+		s2w_switch = 2;
+	} else {
+		s2w_switch = 0;
+	}
+	return 1;
+}
+
+__setup("s2w=", get_s2w_opt); 
+
+static int __init get_pocket_detect_opt(char *pd)
+{
+	if (strcmp(pd, "0") == 0) {
+		pocket_detect = 0;
+	} else if (strcmp(pd, "1") == 0) {
+		pocket_detect = 1;
+	} else {
+		pocket_detect = 0;
+	}
+	return 1;
+}
+
+__setup("pd=", get_pocket_detect_opt); 
+
+static int __init get_dt2w_opt(char *dt2w)
+{
+	if (strcmp(dt2w, "0") == 0) {
+		dt2w_switch = 0;
+	} else if (strcmp(dt2w, "1") == 0) {
+		dt2w_switch = 1;
+	} else if (strcmp(dt2w, "2") == 0) {
+		dt2w_switch = 2;
+	} else {
+		dt2w_switch = 0;
+	}
+	return 1;
+}
+
+__setup("dt2w=", get_dt2w_opt); 
+
+
+static int __init get_vib_opt(char *vib)
+{
+	if (strcmp(vib, "0") == 0) {
+		vib_strength = 0;
+	} else if (strcmp(vib, "1") == 0) {
+		vib_strength = 15;
+	} else if (strcmp(vib, "2") == 0) {
+		vib_strength = 30;
+	} else {
+		vib_strength = 15;
+	}
+	return 1;
+}
+
+__setup("vib=", get_vib_opt);
+
 #endif
 
 static DEFINE_MUTEX(syn_block_mutex);
@@ -1180,12 +1251,12 @@ static int synaptics_input_register(struct synaptics_ts_data *ts)
 	input_set_abs_params(ts->input_dev, ABS_MT_POSITION_Y,
 		ts->layout[2], ts->layout[3], 0, 0);
 
-	input_set_abs_params(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0, MAX_PRESSURE, 0, 0);
-	input_set_abs_params(ts->input_dev, ABS_MT_WIDTH_MAJOR, 0, MAX_WIDTH, 0, 0);
-	input_set_abs_params(ts->input_dev, ABS_MT_PRESSURE, 0, MAX_WIDTH, 0, 0);
+	input_set_abs_params(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0, 255, 0, 0);
+	input_set_abs_params(ts->input_dev, ABS_MT_WIDTH_MAJOR, 0, 30, 0, 0);
+	input_set_abs_params(ts->input_dev, ABS_MT_PRESSURE, 0, 30, 0, 0);
 
 	input_set_abs_params(ts->input_dev, ABS_MT_AMPLITUDE,
-			0, ((MAX_PRESSURE << 16) | 15), 0, 0);
+			0, ((255 << 16) | 15), 0, 0);
 	input_set_abs_params(ts->input_dev, ABS_MT_POSITION,
 		0, ((1 << 31) | (ts->layout[1] << 16) | ts->layout[3]), 0, 0);
 
@@ -2001,6 +2072,24 @@ static ssize_t synaptics_pocket_detect_dump(struct device *dev,
 static DEVICE_ATTR(pocket_detect, 0666,
 	synaptics_pocket_detect_show, synaptics_pocket_detect_dump);
 
+static ssize_t synaptics_vib_strength_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	size_t count = 0;
+	count += sprintf(buf, "%d\n", vib_strength);
+	return count;
+}
+
+static ssize_t synaptics_vib_strength_dump(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	sscanf(buf, "%d ",&vib_strength);
+	if (vib_strength < 0 || vib_strength > 60)
+		vib_strength = 15;
+
+	return count;
+}
+
+static DEVICE_ATTR(vib_strength, 0666,
+	synaptics_vib_strength_show, synaptics_vib_strength_dump);
 #endif
 
 enum SR_REG_STATE{
@@ -2059,11 +2148,11 @@ static int register_sr_touch_device(void)
 	input_set_abs_params(ts->sr_input_dev, ABS_MT_POSITION_Y,
 		ts->layout[2], ts->layout[3], 0, 0);
 	input_set_abs_params(ts->sr_input_dev, ABS_MT_TOUCH_MAJOR,
-		0, MAX_PRESSURE, 0, 0);
+		0, 255, 0, 0);
 	input_set_abs_params(ts->sr_input_dev, ABS_MT_PRESSURE,
-		0, MAX_WIDTH, 0, 0);
+		0, 30, 0, 0);
 	input_set_abs_params(ts->sr_input_dev, ABS_MT_WIDTH_MAJOR,
-		0, MAX_WIDTH, 0, 0);
+		0, 30, 0, 0);
 
 	if (input_register_device(ts->sr_input_dev)) {
 		input_free_device(ts->sr_input_dev);
@@ -2154,6 +2243,13 @@ static int synaptics_touch_sysfs_init(void)
 #endif
 		return ret;
 	}
+	ret = sysfs_create_file(android_touch_kobj, &dev_attr_vib_strength.attr);
+	if (ret) {
+#ifdef ENABLE_SYNAPTICS_3K_LOGGING
+		printk(KERN_ERR "%s: sysfs_create_file failed\n", __func__);
+#endif
+		return ret;
+	}
 
 #endif
 
@@ -2217,6 +2313,7 @@ static void synaptics_touch_sysfs_remove(void)
 	sysfs_remove_file(android_touch_kobj, &dev_attr_sweep2wake.attr);
 	sysfs_remove_file(android_touch_kobj, &dev_attr_doubletap2wake.attr);
 	sysfs_remove_file(android_touch_kobj, &dev_attr_pocket_detect.attr);
+	sysfs_remove_file(android_touch_kobj, &dev_attr_vib_strength.attr);
 #endif
 #ifdef SYN_WIRELESS_DEBUG
 	sysfs_remove_file(android_touch_kobj, &dev_attr_enabled.attr);
@@ -2754,6 +2851,7 @@ static void synaptics_ts_finger_func(struct synaptics_ts_data *ts)
 #ifdef ENABLE_SYNAPTICS_3K_LOGGING
 													printk(KERN_INFO "[sweep2wake]: ON");
 #endif
+													wakesleep_vib = 1;
 													sweep2wake_pwrtrigger();
 													exec_count = false;
 													break;
