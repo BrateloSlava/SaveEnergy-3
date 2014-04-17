@@ -240,6 +240,18 @@ config CPU_FREQ_GOV_SMARTMAX
         help
           'smartmax' combined ondemand and smartass2
 
+config CPU_FREQ_GOV_SMARTMAX_EPS
+        tristate "'smartmax EPS' cpufreq policy governor"
+        select CPU_FREQ_TABLE
+	depends on CPU_FREQ_GOV_SMARTMAX
+        help
+          'smartmax EPS' is the extreme powersaving version of smartmax
+
+choice
+	prompt "Default Smartmax options"
+	depends on CPU_FREQ_GOV_SMARTMAX
+	default CPU_FREQ_GOV_SMARTMAX_K2U
+
 config CPU_FREQ_GOV_SMARTMAX_TEGRA
         bool "'smartmax' for tegra"
         depends on CPU_FREQ_GOV_SMARTMAX || CPU_FREQ_GOV_SMARTMAX_EPS
@@ -264,11 +276,7 @@ config CPU_FREQ_GOV_SMARTMAX_K2U
         bool "'smartmax' defaults for k2u/k2ul"
         depends on CPU_FREQ_GOV_SMARTMAX || CPU_FREQ_GOV_SMARTMAX_EPS
 
-config CPU_FREQ_GOV_SMARTMAX_EPS
-        tristate "'smartmax EPS' cpufreq policy governor"
-        select CPU_FREQ_TABLE
-        help
-          'smartmax EPS' is the extreme powersaving version of smartmax
+endchoice
 
 config CPU_FREQ_GOV_INTELLIACTIVE
 	tristate "'intelliactive' cpufreq policy governor"

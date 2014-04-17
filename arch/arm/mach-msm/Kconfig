@@ -1748,6 +1748,15 @@ config MSM_CPU_FREQ_MIN
 	depends on MSM_CPU_FREQ_SET_MIN_MAX
 	default 162000
 
+config MSM_CPU_FREQ_SET_SCREEN_CAP
+	bool "Screen off freq cap drivers"
+	default n
+
+config MSM_CPU_FREQ_SCREEN_CAP
+	int "Min CPU Freq when turn off display"
+	depends on MSM_CPU_FREQ_SET_SCREEN_CAP
+	default 702000
+
 endif # CPU_FREQ_MSM
 
 config INTELLI_PLUG
@@ -2912,12 +2921,6 @@ config QUALCOMM_WLAN_PXO
 	help
 	  Use PXO for clock source of WLAN chip
 
-config UPDATE_LCDC_LUT
-	default y
-	bool "enable LCDC LUT"
-	help
-	  enable LCDC LUT
-
 config FORCE_FAST_CHARGE
 	bool "Force AC charge mode at will"
 	default y
@@ -2927,13 +2930,13 @@ config FORCE_FAST_CHARGE
 
 config UPDATE_LCDC_LUT
         bool "Set initial Qualcomm LCDC lut"
-        default n
+        default y
         help
           Set initial Qualcomm LCDC Look Up Table.
 
 config LCD_KCAL
         tristate "MSM generic LCDC Calibration"
-        default n
+        default y
         help
           Enable MSM generic LCDC temperature Calibration.
 

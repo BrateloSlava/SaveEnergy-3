@@ -15,7 +15,9 @@
  *
  */
 
+#ifdef CONFIG_HAS_EARLYSUSPEND
 #include <linux/earlysuspend.h>
+#endif
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/cpufreq.h>
@@ -29,13 +31,19 @@
 #define CPUFREQ_CAP_TAG                       "[CPUFREQ_CAP]: "
 
 static struct kobject *auto_sysfs_kobject;
+#ifdef CONFIG_MSM_CPU_FREQ_SCREEN_CAP
+#define DEFAULT_SCREEN_OFF_FREQ_CAP CONFIG_MSM_CPU_FREQ_SCREEN_CAP
+#else
 #define DEFAULT_SCREEN_OFF_FREQ_CAP 702000
+#endif
 static unsigned int screen_off_max_freq = DEFAULT_SCREEN_OFF_FREQ_CAP;
 static bool screen_off_cap = true;
 #ifdef CONFIG_HAS_EARLYSUSPEND
 struct early_suspend cpufreq_early_suspender;
 #endif
+#ifdef CONFIG_HAS_EARLYSUSPEND
 static bool screen_off_cap_active = false;
+#endif
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
 static void cpufreq_early_suspend(struct early_suspend *h)

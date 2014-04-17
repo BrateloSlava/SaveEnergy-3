@@ -20,4 +20,4 @@ obj-$(CONFIG_MAGIC_SYSRQ)	+= poweroff.o
 obj-$(CONFIG_HTC_PNPMGR)	+= htc_pnpmgr.o
 obj-$(CONFIG_ADAPTIVE_TUNING)	+= adaptive_tuning.o
 
-obj-$(CONFIG_SUSPEND)	+= wakeup_reason.o
+obj-$(CONFIG_LOG_WAKEUP_REASON)	+= wakeup_reason.o

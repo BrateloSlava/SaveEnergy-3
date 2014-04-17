@@ -590,4 +590,5 @@ obj-$(CONFIG_LCD_KCAL) += msm_kcal_ctrl.o
 
 obj-$(CONFIG_INTELLI_PLUG) += intelli_plug.o
 
-obj-$(CONFIG_CPU_FREQ_MSM) += cpufreq.o cpufreq-cap.o
+obj-$(CONFIG_CPU_FREQ_MSM) += cpufreq.o
+obj-$(CONFIG_MSM_CPU_FREQ_SET_SCREEN_CAP) += cpufreq-cap.o
