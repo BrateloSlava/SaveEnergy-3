@@ -1,0 +1,526 @@
+commit e51b6d4f64a88e1eaaefdb3a984b0c2e28b00dcd
+Author: BrateloSlava <d_slava@list.ru>
+Date:   Tue Apr 22 08:54:02 2014 +0300
+
+    Revert to old wifi drivers
+
+diff --git a/.config b/.config
+index 9adb686..d69f937 100644
+--- a/.config
++++ b/.config
+@@ -39,7 +39,7 @@ CONFIG_IRQ_WORK=y
+ CONFIG_EXPERIMENTAL=y
+ CONFIG_INIT_ENV_ARG_LIMIT=32
+ CONFIG_CROSS_COMPILE=""
+-CONFIG_LOCALVERSION="_SaveEnergy-3_PR12.4"
++CONFIG_LOCALVERSION="_SaveEnergy-3_PR12.6"
+ # CONFIG_LOCALVERSION_AUTO is not set
+ CONFIG_HAVE_KERNEL_GZIP=y
+ CONFIG_HAVE_KERNEL_LZMA=y
+@@ -445,6 +445,8 @@ CONFIG_MSM_IPC_ROUTER=y
+ CONFIG_MSM_IPC_ROUTER_SMD_XPRT=y
+ # CONFIG_MSM_DALRPC is not set
+ # CONFIG_MSM_CPU_FREQ_SET_MIN_MAX is not set
++CONFIG_MSM_CPU_FREQ_SET_SCREEN_CAP=y
++CONFIG_MSM_CPU_FREQ_SCREEN_CAP=702000
+ CONFIG_INTELLI_PLUG=y
+ CONFIG_INTELLI_PLUG_DUAL=y
+ # CONFIG_SLEEPY_PLUG is not set
+@@ -735,9 +737,9 @@ CONFIG_CPU_FREQ_STAT=y
+ # CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMAND is not set
+ # CONFIG_CPU_FREQ_DEFAULT_GOV_CONSERVATIVE is not set
+ # CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVE is not set
+-CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTMAX=y
++# CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTMAX is not set
+ # CONFIG_CPU_FREQ_DEFAULT_GOV_INTELLIACTIVE is not set
+-# CONFIG_CPU_FREQ_DEFAULT_GOV_INTELLIDEMAND is not set
++CONFIG_CPU_FREQ_DEFAULT_GOV_INTELLIDEMAND=y
+ # CONFIG_CPU_FREQ_GOV_PERFORMANCE is not set
+ # CONFIG_CPU_FREQ_GOV_POWERSAVE is not set
+ # CONFIG_CPU_FREQ_GOV_USERSPACE is not set
+@@ -746,14 +748,14 @@ CONFIG_CPU_FREQ_GOV_ONDEMAND_MULTI_PHASE=y
+ # CONFIG_CPU_FREQ_GOV_INTERACTIVE is not set
+ # CONFIG_CPU_FREQ_GOV_CONSERVATIVE is not set
+ CONFIG_CPU_FREQ_GOV_SMARTMAX=y
++# CONFIG_CPU_FREQ_GOV_SMARTMAX_EPS is not set
+ # CONFIG_CPU_FREQ_GOV_SMARTMAX_TEGRA is not set
+ # CONFIG_CPU_FREQ_GOV_SMARTMAX_30 is not set
+ # CONFIG_CPU_FREQ_GOV_SMARTMAX_ENRC2B is not set
+ # CONFIG_CPU_FREQ_GOV_SMARTMAX_PRIMOU is not set
+ # CONFIG_CPU_FREQ_GOV_SMARTMAX_M7 is not set
+ CONFIG_CPU_FREQ_GOV_SMARTMAX_K2U=y
+-CONFIG_CPU_FREQ_GOV_SMARTMAX_EPS=y
+-# CONFIG_CPU_FREQ_GOV_INTELLIACTIVE is not set
++CONFIG_CPU_FREQ_GOV_INTELLIACTIVE=y
+ CONFIG_CPU_FREQ_GOV_INTELLIDEMAND=y
+ 
+ #
+@@ -798,6 +800,7 @@ CONFIG_HAVE_AOUT=y
+ #
+ CONFIG_SUSPEND=y
+ CONFIG_SUSPEND_FREEZER=y
++# CONFIG_LOG_WAKEUP_REASON is not set
+ CONFIG_HAS_WAKELOCK=y
+ CONFIG_HAS_EARLYSUSPEND=y
+ CONFIG_WAKELOCK=y
+@@ -1360,43 +1363,9 @@ CONFIG_EEPROM_93CX6=y
+ #
+ CONFIG_SCSI_MOD=y
+ # CONFIG_RAID_ATTRS is not set
+-CONFIG_SCSI=y
+-CONFIG_SCSI_DMA=y
+-CONFIG_SCSI_TGT=y
++# CONFIG_SCSI is not set
++# CONFIG_SCSI_DMA is not set
+ # CONFIG_SCSI_NETLINK is not set
+-CONFIG_SCSI_PROC_FS=y
+-
+-#
+-# SCSI support type (disk, tape, CD-ROM)
+-#
+-CONFIG_BLK_DEV_SD=y
+-# CONFIG_CHR_DEV_ST is not set
+-# CONFIG_CHR_DEV_OSST is not set
+-# CONFIG_BLK_DEV_SR is not set
+-CONFIG_CHR_DEV_SG=y
+-CONFIG_CHR_DEV_SCH=y
+-CONFIG_SCSI_MULTI_LUN=y
+-CONFIG_SCSI_CONSTANTS=y
+-# CONFIG_SCSI_LOGGING is not set
+-CONFIG_SCSI_SCAN_ASYNC=y
+-
+-#
+-# SCSI Transports
+-#
+-# CONFIG_SCSI_SPI_ATTRS is not set
+-# CONFIG_SCSI_FC_ATTRS is not set
+-# CONFIG_SCSI_ISCSI_ATTRS is not set
+-# CONFIG_SCSI_SAS_ATTRS is not set
+-# CONFIG_SCSI_SAS_LIBSAS is not set
+-# CONFIG_SCSI_SRP_ATTRS is not set
+-CONFIG_SCSI_LOWLEVEL=y
+-# CONFIG_ISCSI_TCP is not set
+-# CONFIG_ISCSI_BOOT_SYSFS is not set
+-# CONFIG_LIBFC is not set
+-# CONFIG_LIBFCOE is not set
+-# CONFIG_SCSI_DEBUG is not set
+-# CONFIG_SCSI_DH is not set
+-# CONFIG_SCSI_OSD_INITIATOR is not set
+ # CONFIG_ATA is not set
+ CONFIG_MD=y
+ # CONFIG_BLK_DEV_MD is not set
+@@ -1413,7 +1382,6 @@ CONFIG_DM_CRYPT=y
+ # CONFIG_DM_UEVENT is not set
+ # CONFIG_DM_FLAKEY is not set
+ # CONFIG_DM_VERITY is not set
+-# CONFIG_TARGET_CORE is not set
+ CONFIG_NETDEVICES=y
+ CONFIG_NET_CORE=y
+ # CONFIG_BONDING is not set
+@@ -1540,18 +1508,18 @@ CONFIG_WLAN=y
+ # CONFIG_WCNSS_CORE is not set
+ # CONFIG_QUALCOMM_WLAN is not set
+ # CONFIG_ATH_COMMON is not set
+-# CONFIG_BCMDHD is not set
++CONFIG_BCMDHD=y
++CONFIG_BCMDHD_4334=y
+ CONFIG_BCMDHD_FW_PATH="/system/etc/firmware/fw_bcm4334.bin"
+ CONFIG_BCMDHD_NVRAM_PATH="/etc/calibration"
++# CONFIG_DHD_USE_STATIC_BUF is not set
++# CONFIG_DHD_USE_SCHED_SCAN is not set
++# CONFIG_HTC_IGNORE_SKB_ALIGNMENT is not set
+ # CONFIG_BRCMFMAC is not set
+ # CONFIG_HOSTAP is not set
+ # CONFIG_IWM is not set
+ # CONFIG_LIBERTAS is not set
+ # CONFIG_MWIFIEX is not set
+-# CONFIG_BCMDHD_4330 is not set
+-# CONFIG_HTC_IGNORE_SKB_ALIGNMENT is not set
+-CONFIG_BCMDHD_4334=y
+-# CONFIG_BCMDHD_4335 is not set
+ 
+ #
+ # Enable WiMAX (Networking options) to see the WiMAX drivers
+@@ -2857,29 +2825,12 @@ CONFIG_USB_ACM=y
+ #
+ # also be needed; see USB_STORAGE Help for more info
+ #
+-CONFIG_USB_STORAGE=y
+-# CONFIG_USB_STORAGE_DEBUG is not set
+-# CONFIG_USB_STORAGE_REALTEK is not set
+-CONFIG_USB_STORAGE_DATAFAB=y
+-CONFIG_USB_STORAGE_FREECOM=y
+-CONFIG_USB_STORAGE_ISD200=y
+-CONFIG_USB_STORAGE_USBAT=y
+-CONFIG_USB_STORAGE_SDDR09=y
+-CONFIG_USB_STORAGE_SDDR55=y
+-CONFIG_USB_STORAGE_JUMPSHOT=y
+-CONFIG_USB_STORAGE_ALAUDA=y
+-CONFIG_USB_STORAGE_ONETOUCH=y
+-CONFIG_USB_STORAGE_KARMA=y
+-CONFIG_USB_STORAGE_CYPRESS_ATACB=y
+-# CONFIG_USB_STORAGE_ENE_UB6250 is not set
+-# CONFIG_USB_UAS is not set
+ # CONFIG_USB_LIBUSUAL is not set
+ 
+ #
+ # USB Imaging devices
+ #
+ # CONFIG_USB_MDC800 is not set
+-# CONFIG_USB_MICROTEK is not set
+ 
+ #
+ # USB port drivers
+@@ -3237,7 +3188,6 @@ CONFIG_STAGING=y
+ # CONFIG_ECHO is not set
+ # CONFIG_ASUS_OLED is not set
+ # CONFIG_R8712U is not set
+-# CONFIG_RTS5139 is not set
+ # CONFIG_TRANZPORT is not set
+ # CONFIG_LINE6_USB is not set
+ # CONFIG_USB_SERIAL_QUATECH2 is not set
+diff --git a/arch/arm/configs/k2_u_defconfig b/arch/arm/configs/k2_u_defconfig
+index 9adb686..d69f937 100644
+--- a/arch/arm/configs/k2_u_defconfig
++++ b/arch/arm/configs/k2_u_defconfig
+@@ -39,7 +39,7 @@ CONFIG_IRQ_WORK=y
+ CONFIG_EXPERIMENTAL=y
+ CONFIG_INIT_ENV_ARG_LIMIT=32
+ CONFIG_CROSS_COMPILE=""
+-CONFIG_LOCALVERSION="_SaveEnergy-3_PR12.4"
++CONFIG_LOCALVERSION="_SaveEnergy-3_PR12.6"
+ # CONFIG_LOCALVERSION_AUTO is not set
+ CONFIG_HAVE_KERNEL_GZIP=y
+ CONFIG_HAVE_KERNEL_LZMA=y
+@@ -445,6 +445,8 @@ CONFIG_MSM_IPC_ROUTER=y
+ CONFIG_MSM_IPC_ROUTER_SMD_XPRT=y
+ # CONFIG_MSM_DALRPC is not set
+ # CONFIG_MSM_CPU_FREQ_SET_MIN_MAX is not set
++CONFIG_MSM_CPU_FREQ_SET_SCREEN_CAP=y
++CONFIG_MSM_CPU_FREQ_SCREEN_CAP=702000
+ CONFIG_INTELLI_PLUG=y
+ CONFIG_INTELLI_PLUG_DUAL=y
+ # CONFIG_SLEEPY_PLUG is not set
+@@ -735,9 +737,9 @@ CONFIG_CPU_FREQ_STAT=y
+ # CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMAND is not set
+ # CONFIG_CPU_FREQ_DEFAULT_GOV_CONSERVATIVE is not set
+ # CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVE is not set
+-CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTMAX=y
++# CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTMAX is not set
+ # CONFIG_CPU_FREQ_DEFAULT_GOV_INTELLIACTIVE is not set
+-# CONFIG_CPU_FREQ_DEFAULT_GOV_INTELLIDEMAND is not set
++CONFIG_CPU_FREQ_DEFAULT_GOV_INTELLIDEMAND=y
+ # CONFIG_CPU_FREQ_GOV_PERFORMANCE is not set
+ # CONFIG_CPU_FREQ_GOV_POWERSAVE is not set
+ # CONFIG_CPU_FREQ_GOV_USERSPACE is not set
+@@ -746,14 +748,14 @@ CONFIG_CPU_FREQ_GOV_ONDEMAND_MULTI_PHASE=y
+ # CONFIG_CPU_FREQ_GOV_INTERACTIVE is not set
+ # CONFIG_CPU_FREQ_GOV_CONSERVATIVE is not set
+ CONFIG_CPU_FREQ_GOV_SMARTMAX=y
++# CONFIG_CPU_FREQ_GOV_SMARTMAX_EPS is not set
+ # CONFIG_CPU_FREQ_GOV_SMARTMAX_TEGRA is not set
+ # CONFIG_CPU_FREQ_GOV_SMARTMAX_30 is not set
+ # CONFIG_CPU_FREQ_GOV_SMARTMAX_ENRC2B is not set
+ # CONFIG_CPU_FREQ_GOV_SMARTMAX_PRIMOU is not set
+ # CONFIG_CPU_FREQ_GOV_SMARTMAX_M7 is not set
+ CONFIG_CPU_FREQ_GOV_SMARTMAX_K2U=y
+-CONFIG_CPU_FREQ_GOV_SMARTMAX_EPS=y
+-# CONFIG_CPU_FREQ_GOV_INTELLIACTIVE is not set
++CONFIG_CPU_FREQ_GOV_INTELLIACTIVE=y
+ CONFIG_CPU_FREQ_GOV_INTELLIDEMAND=y
+ 
+ #
+@@ -798,6 +800,7 @@ CONFIG_HAVE_AOUT=y
+ #
+ CONFIG_SUSPEND=y
+ CONFIG_SUSPEND_FREEZER=y
++# CONFIG_LOG_WAKEUP_REASON is not set
+ CONFIG_HAS_WAKELOCK=y
+ CONFIG_HAS_EARLYSUSPEND=y
+ CONFIG_WAKELOCK=y
+@@ -1360,43 +1363,9 @@ CONFIG_EEPROM_93CX6=y
+ #
+ CONFIG_SCSI_MOD=y
+ # CONFIG_RAID_ATTRS is not set
+-CONFIG_SCSI=y
+-CONFIG_SCSI_DMA=y
+-CONFIG_SCSI_TGT=y
++# CONFIG_SCSI is not set
++# CONFIG_SCSI_DMA is not set
+ # CONFIG_SCSI_NETLINK is not set
+-CONFIG_SCSI_PROC_FS=y
+-
+-#
+-# SCSI support type (disk, tape, CD-ROM)
+-#
+-CONFIG_BLK_DEV_SD=y
+-# CONFIG_CHR_DEV_ST is not set
+-# CONFIG_CHR_DEV_OSST is not set
+-# CONFIG_BLK_DEV_SR is not set
+-CONFIG_CHR_DEV_SG=y
+-CONFIG_CHR_DEV_SCH=y
+-CONFIG_SCSI_MULTI_LUN=y
+-CONFIG_SCSI_CONSTANTS=y
+-# CONFIG_SCSI_LOGGING is not set
+-CONFIG_SCSI_SCAN_ASYNC=y
+-
+-#
+-# SCSI Transports
+-#
+-# CONFIG_SCSI_SPI_ATTRS is not set
+-# CONFIG_SCSI_FC_ATTRS is not set
+-# CONFIG_SCSI_ISCSI_ATTRS is not set
+-# CONFIG_SCSI_SAS_ATTRS is not set
+-# CONFIG_SCSI_SAS_LIBSAS is not set
+-# CONFIG_SCSI_SRP_ATTRS is not set
+-CONFIG_SCSI_LOWLEVEL=y
+-# CONFIG_ISCSI_TCP is not set
+-# CONFIG_ISCSI_BOOT_SYSFS is not set
+-# CONFIG_LIBFC is not set
+-# CONFIG_LIBFCOE is not set
+-# CONFIG_SCSI_DEBUG is not set
+-# CONFIG_SCSI_DH is not set
+-# CONFIG_SCSI_OSD_INITIATOR is not set
+ # CONFIG_ATA is not set
+ CONFIG_MD=y
+ # CONFIG_BLK_DEV_MD is not set
+@@ -1413,7 +1382,6 @@ CONFIG_DM_CRYPT=y
+ # CONFIG_DM_UEVENT is not set
+ # CONFIG_DM_FLAKEY is not set
+ # CONFIG_DM_VERITY is not set
+-# CONFIG_TARGET_CORE is not set
+ CONFIG_NETDEVICES=y
+ CONFIG_NET_CORE=y
+ # CONFIG_BONDING is not set
+@@ -1540,18 +1508,18 @@ CONFIG_WLAN=y
+ # CONFIG_WCNSS_CORE is not set
+ # CONFIG_QUALCOMM_WLAN is not set
+ # CONFIG_ATH_COMMON is not set
+-# CONFIG_BCMDHD is not set
++CONFIG_BCMDHD=y
++CONFIG_BCMDHD_4334=y
+ CONFIG_BCMDHD_FW_PATH="/system/etc/firmware/fw_bcm4334.bin"
+ CONFIG_BCMDHD_NVRAM_PATH="/etc/calibration"
++# CONFIG_DHD_USE_STATIC_BUF is not set
++# CONFIG_DHD_USE_SCHED_SCAN is not set
++# CONFIG_HTC_IGNORE_SKB_ALIGNMENT is not set
+ # CONFIG_BRCMFMAC is not set
+ # CONFIG_HOSTAP is not set
+ # CONFIG_IWM is not set
+ # CONFIG_LIBERTAS is not set
+ # CONFIG_MWIFIEX is not set
+-# CONFIG_BCMDHD_4330 is not set
+-# CONFIG_HTC_IGNORE_SKB_ALIGNMENT is not set
+-CONFIG_BCMDHD_4334=y
+-# CONFIG_BCMDHD_4335 is not set
+ 
+ #
+ # Enable WiMAX (Networking options) to see the WiMAX drivers
+@@ -2857,29 +2825,12 @@ CONFIG_USB_ACM=y
+ #
+ # also be needed; see USB_STORAGE Help for more info
+ #
+-CONFIG_USB_STORAGE=y
+-# CONFIG_USB_STORAGE_DEBUG is not set
+-# CONFIG_USB_STORAGE_REALTEK is not set
+-CONFIG_USB_STORAGE_DATAFAB=y
+-CONFIG_USB_STORAGE_FREECOM=y
+-CONFIG_USB_STORAGE_ISD200=y
+-CONFIG_USB_STORAGE_USBAT=y
+-CONFIG_USB_STORAGE_SDDR09=y
+-CONFIG_USB_STORAGE_SDDR55=y
+-CONFIG_USB_STORAGE_JUMPSHOT=y
+-CONFIG_USB_STORAGE_ALAUDA=y
+-CONFIG_USB_STORAGE_ONETOUCH=y
+-CONFIG_USB_STORAGE_KARMA=y
+-CONFIG_USB_STORAGE_CYPRESS_ATACB=y
+-# CONFIG_USB_STORAGE_ENE_UB6250 is not set
+-# CONFIG_USB_UAS is not set
+ # CONFIG_USB_LIBUSUAL is not set
+ 
+ #
+ # USB Imaging devices
+ #
+ # CONFIG_USB_MDC800 is not set
+-# CONFIG_USB_MICROTEK is not set
+ 
+ #
+ # USB port drivers
+@@ -3237,7 +3188,6 @@ CONFIG_STAGING=y
+ # CONFIG_ECHO is not set
+ # CONFIG_ASUS_OLED is not set
+ # CONFIG_R8712U is not set
+-# CONFIG_RTS5139 is not set
+ # CONFIG_TRANZPORT is not set
+ # CONFIG_LINE6_USB is not set
+ # CONFIG_USB_SERIAL_QUATECH2 is not set
+diff --git a/drivers/net/wireless/bcmdhd_4334/Kconfig b/drivers/net/wireless/bcmdhd_4334/Kconfig
+index 796a0a5..3de85c6 100644
+--- a/drivers/net/wireless/bcmdhd_4334/Kconfig
++++ b/drivers/net/wireless/bcmdhd_4334/Kconfig
+@@ -1,6 +1,6 @@
+ config BCMDHD_4334
+ 	tristate "Broadcom 4329/30 wireless cards support"
+-	depends on MMC
++	depends on WLAN
+ 	---help---
+ 	  This module adds support for wireless adapters based on
+ 	  Broadcom 4329/30 chipset.
+@@ -24,6 +24,13 @@ config BCMDHD_NVRAM_PATH
+ 	---help---
+ 	  Path to the calibration file.
+ 
++config BCMDHD_WIFI_PM
++	bool "Enable support for changing the WiFi power mode"
++	depends on BCMDHD_4334
++	default y
++	---help---
++	Enable support for changing the WiFi power mode for screen-off.
++
+ config BCMDHD_WEXT
+ 	bool "Enable WEXT support"
+ 	depends on BCMDHD_4334 && CFG80211 = n
+diff --git a/drivers/net/wireless/bcmdhd_4334/dhd_linux.c b/drivers/net/wireless/bcmdhd_4334/dhd_linux.c
+index 55015d2..1c7039c 100644
+--- a/drivers/net/wireless/bcmdhd_4334/dhd_linux.c
++++ b/drivers/net/wireless/bcmdhd_4334/dhd_linux.c
+@@ -611,9 +611,16 @@ static void dhd_set_packet_filter(int value, dhd_pub_t *dhd)
+ 				value, dhd_master_mode);
+ 		}
+ 	}
+-#endif
++#endif /* PKT_FILTER_SUPPORT */
+ }
+ 
++#ifdef CONFIG_BCMDHD_WIFI_PM
++int wifi_pm = 0;
++/* /sys/module/dhd/parameters/wifi_pm */
++module_param(wifi_pm, int, 0755);
++EXPORT_SYMBOL(wifi_pm);
++#endif
++
+ #if defined(CONFIG_HAS_EARLYSUSPEND)
+ void wl_android_set_screen_off(int off);
+ dhd_pub_t *pdhd = NULL;
+@@ -633,6 +640,9 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
+ #ifdef BCM4329_LOW_POWER
+ 	int ignore_bcmc = 1;
+ #endif
++#ifdef CONFIG_BCMDHD_WIFI_PM
++int power_mode;
++#endif
+ 	char iovbuf[32];
+ 
+ #ifdef CUSTOMER_HW2
+@@ -644,6 +654,20 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
+ 	DHD_TRACE(("%s: enter, value = %d in_suspend=%d\n",
+ 		__FUNCTION__, value, dhd->in_suspend));
+ 
++#ifdef CONFIG_BCMDHD_WIFI_PM
++	if (wifi_pm == 1) {
++	power_mode = PM_FAST;
++	pr_info("[4334] %p Wi-Fi Power Management policy changed to PM_FAST.", __func__);
++	} else {
++	power_mode = PM_MAX;
++	pr_info("[4334] %p Wi-Fi Power Management policy changed to PM_MAX.", __func__);
++	}
++#else
++#ifndef SUPPORT_PM2_ONLY
++	int power_mode = PM_MAX;
++#endif
++#endif
++
+ 	
+ 	wl_android_set_screen_off(is_screen_off);
+ 	
+@@ -689,11 +713,21 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
+ 
+       }
+ 
++
+ 	if (dhd && dhd->up) {
+ 		if (value && dhd->in_suspend) {
+ #ifdef PKT_FILTER_SUPPORT
+ 				dhd->early_suspended = 1;
+ #endif
++#ifdef CONFIG_BCMDHD_WIFI_PM
++				dhd_wl_ioctl_cmd(dhd, WLC_SET_PM, (char *)&power_mode, sizeof(power_mode), TRUE, 0);
++#else
++#ifndef SUPPORT_PM2_ONLY
++				dhd_wl_ioctl_cmd(dhd, WLC_SET_PM, (char *)&power_mode,
++				                 sizeof(power_mode), TRUE, 0);
++#endif /* SUPPORT_PM2_ONLY */
++#endif 
++
+ #ifdef BCM4329_LOW_POWER
+ 		if (LowPowerMode == 1) {
+ 			if (!hasDLNA && !allowMulticast) {
+@@ -732,6 +766,15 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
+ 
+ 				
+ 				DHD_TRACE(("%s: Remove extra suspend setting \n", __FUNCTION__));
++#ifdef CONFIG_BCMDHD_WIFI_PM
++				dhd_wl_ioctl_cmd(dhd, WLC_SET_PM, (char *)&power_mode, sizeof(power_mode), TRUE, 0);
++#else
++#ifndef SUPPORT_PM2_ONLY
++				power_mode = PM_FAST;
++				dhd_wl_ioctl_cmd(dhd, WLC_SET_PM, (char *)&power_mode,
++				                 sizeof(power_mode), TRUE, 0);
++#endif /* SUPPORT_PM2_ONLY */
++#endif /* CONFIG_BCMDHD_WIFI_PM */
+ 
+ #ifdef PNO_SUPPORT
+ 				dhd_set_pfn(dhd, 0);
+diff --git a/drivers/net/wireless/bcmdhd_4334/wl_cfg80211.c b/drivers/net/wireless/bcmdhd_4334/wl_cfg80211.c
+index 69f3008..218ad4d 100644
+--- a/drivers/net/wireless/bcmdhd_4334/wl_cfg80211.c
++++ b/drivers/net/wireless/bcmdhd_4334/wl_cfg80211.c
+@@ -3754,6 +3754,7 @@ wl_cfg80211_set_power_mgmt(struct wiphy *wiphy, struct net_device *dev,
+ 	s32 err = 0;
+ 	struct wl_priv *wl = wiphy_priv(wiphy);
+ 	struct net_info *_net_info = wl_get_netinfo_by_netdev(wl, dev);
++	dhd_pub_t *dhd = (dhd_pub_t *)(wl->pub);
+ 
+ 	CHECK_SYS_UP(wl);
+ 
+@@ -3761,7 +3762,8 @@ wl_cfg80211_set_power_mgmt(struct wiphy *wiphy, struct net_device *dev,
+ 		return err;
+ 	}
+ 
+-	pm = enabled ? PM_FAST : PM_OFF;
++	/* android has special hooks to change pm when kernel suspended */
++	pm = enabled ? ((dhd->in_suspend) ? PM_MAX : PM_FAST) : PM_OFF;
+ 	
+ 	if (_net_info->pm_block || wl->vsdb_mode) {
+ 		WL_DBG(("Do not enable the power save\n"));
+diff --git a/drivers/net/wireless/bcmdhd_4334/wl_iw.c b/drivers/net/wireless/bcmdhd_4334/wl_iw.c
+index 1c9816a..4990273 100644
+--- a/drivers/net/wireless/bcmdhd_4334/wl_iw.c
++++ b/drivers/net/wireless/bcmdhd_4334/wl_iw.c
+@@ -209,6 +209,10 @@ static struct mutex     wl_softap_lock;
+ #define DHD_OS_MUTEX_LOCK(a) mutex_lock(a)
+ #define DHD_OS_MUTEX_UNLOCK(a) mutex_unlock(a)
+ 
++#ifdef CONFIG_BCMDHD_WIFI_PM
++extern int wifi_pm;
++#endif
++      
+ static void swap_key_from_BE(
+ 	        wl_wsec_key_t *key
+ )
+@@ -2559,7 +2563,14 @@ wl_iw_set_power(
+ 
+ 	WL_TRACE(("%s: SIOCSIWPOWER\n", dev->name));
+ 
+-	pm = vwrq->disabled ? PM_OFF : PM_MAX;
++#ifdef CONFIG_BCMDHD_WIFI_PM
++	if (wifi_pm == 1)
++		pm = vwrq->disabled ? PM_OFF : PM_FAST;
++	else
++		pm = vwrq->disabled ? PM_OFF : PM_MAX;
++#else
++		pm = vwrq->disabled ? PM_OFF : PM_MAX;
++#endif
+ 
+ 	pm = htod32(pm);
+ 	if ((error = dev_wlc_ioctl(dev, WLC_SET_PM, &pm, sizeof(pm))))
