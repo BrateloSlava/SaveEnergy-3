@@ -5947,6 +5947,7 @@ msmsdcc_probe(struct platform_device *pdev)
 	if (ret)
 		goto remove_polling_file;
 
+	device_enable_async_suspend(&pdev->dev);
 exit:
 	return 0;
  remove_polling_file:
