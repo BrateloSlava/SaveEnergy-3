@@ -412,7 +412,8 @@ int mmc_add_host(struct mmc_host *host)
 	if (err)
 		return err;
 
-	
+	device_enable_async_suspend(&host->class_dev);
+
 
 #ifdef CONFIG_DEBUG_FS
 	mmc_add_host_debugfs(host);
