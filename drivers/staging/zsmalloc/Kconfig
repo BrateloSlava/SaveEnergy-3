@@ -1,5 +1,5 @@
 config ZSMALLOC
-	bool "Memory allocator for compressed pages (zsmalloc old)"
+	bool "Memory allocator for compressed pages (ZSMALLOC)"
 	default n
 	help
 	  zsmalloc is a slab-based memory allocator designed to store
