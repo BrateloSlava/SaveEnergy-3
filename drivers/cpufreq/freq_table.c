@@ -14,6 +14,10 @@
 #include <linux/init.h>
 #include <linux/cpufreq.h>
 
+/*********************************************************************
+ *                     FREQUENCY TABLE HELPERS                       *
+ *********************************************************************/
+
 int cpufreq_frequency_table_cpuinfo(struct cpufreq_policy *policy,
 				    struct cpufreq_frequency_table *table)
 {
@@ -87,7 +91,6 @@ int cpufreq_frequency_table_verify(struct cpufreq_policy *policy,
 }
 EXPORT_SYMBOL_GPL(cpufreq_frequency_table_verify);
 
-
 int cpufreq_frequency_table_target(struct cpufreq_policy *policy,
 				   struct cpufreq_frequency_table *table,
 				   unsigned int target_freq,
@@ -123,11 +126,15 @@ int cpufreq_frequency_table_target(struct cpufreq_policy *policy,
 		unsigned int freq = table[i].frequency;
 		if (freq == CPUFREQ_ENTRY_INVALID)
 			continue;
-		if ((freq < policy->min) || (freq > policy->max))
+		if (freq < policy->min || freq > policy->max)
 			continue;
+		if (freq == target_freq) {
+			optimal.index = i;
+			break;
+		}
 		switch (relation) {
 		case CPUFREQ_RELATION_H:
-			if (freq <= target_freq) {
+			if (freq < target_freq) {
 				if (freq >= optimal.frequency) {
 					optimal.frequency = freq;
 					optimal.index = i;
@@ -140,7 +147,7 @@ int cpufreq_frequency_table_target(struct cpufreq_policy *policy,
 			}
 			break;
 		case CPUFREQ_RELATION_L:
-			if (freq >= target_freq) {
+			if (freq > target_freq) {
 				if (freq <= optimal.frequency) {
 					optimal.frequency = freq;
 					optimal.index = i;
@@ -169,6 +176,9 @@ int cpufreq_frequency_table_target(struct cpufreq_policy *policy,
 EXPORT_SYMBOL_GPL(cpufreq_frequency_table_target);
 
 static DEFINE_PER_CPU(struct cpufreq_frequency_table *, cpufreq_show_table);
+/**
+ * show_available_freqs - show available frequencies for the specified CPU
+ */
 static ssize_t show_available_freqs(struct cpufreq_policy *policy, char *buf)
 {
 	unsigned int i = 0;
@@ -200,6 +210,10 @@ struct freq_attr cpufreq_freq_attr_scaling_available_freqs = {
 };
 EXPORT_SYMBOL_GPL(cpufreq_freq_attr_scaling_available_freqs);
 
+/*
+ * if you use these, you must assure that the frequency table is valid
+ * all the time between get_attr and put_attr!
+ */
 void cpufreq_frequency_table_get_attr(struct cpufreq_frequency_table *table,
 				      unsigned int cpu)
 {
