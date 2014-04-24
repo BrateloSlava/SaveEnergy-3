@@ -86,13 +86,6 @@ extern "C" {
 #define FFS_CONFIG_SUPPORT_CP950        1       // Traditional Chinese
 #define FFS_CONFIG_SUPPORT_UTF8         1       // UTF8 encoding
 
-/*----------------------------------------------------------------------*/
-/* Feature Config                                                       */
-/*----------------------------------------------------------------------*/
-#define EXFAT_CONFIG_DISCARD		1	// mount option -o discard support
-#define EXFAT_CONFIG_KERNEL_DEBUG	1	// kernel debug features via ioctl
-#define EXFAT_CONFIG_DEBUG_MSG		0	// debugging message on/off
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
