@@ -839,6 +839,7 @@ int fat_dir_empty(struct inode *dir)
 	int result = 0;
 
 	bh = NULL;
+	de = NULL;
 	cpos = 0;
 	while (fat_get_short_entry(dir, &cpos, &bh, &de) >= 0) {
 		if (strncmp(de->name, MSDOS_DOT   , MSDOS_NAME) &&
@@ -861,6 +862,7 @@ int fat_subdirs(struct inode *dir)
 	int count = 0;
 
 	bh = NULL;
+	de = NULL;
 	cpos = 0;
 	while (fat_get_short_entry(dir, &cpos, &bh, &de) >= 0) {
 		if (de->attr & ATTR_DIR)

@@ -209,10 +209,6 @@ static struct mutex     wl_softap_lock;
 #define DHD_OS_MUTEX_LOCK(a) mutex_lock(a)
 #define DHD_OS_MUTEX_UNLOCK(a) mutex_unlock(a)
 
-#ifdef CONFIG_BCMDHD_WIFI_PM
-extern int wifi_pm;
-#endif
-      
 static void swap_key_from_BE(
 	        wl_wsec_key_t *key
 )
@@ -2563,14 +2559,7 @@ wl_iw_set_power(
 
 	WL_TRACE(("%s: SIOCSIWPOWER\n", dev->name));
 
-#ifdef CONFIG_BCMDHD_WIFI_PM
-	if (wifi_pm == 1)
-		pm = vwrq->disabled ? PM_OFF : PM_FAST;
-	else
-		pm = vwrq->disabled ? PM_OFF : PM_MAX;
-#else
-		pm = vwrq->disabled ? PM_OFF : PM_MAX;
-#endif
+	pm = vwrq->disabled ? PM_OFF : PM_MAX;
 
 	pm = htod32(pm);
 	if ((error = dev_wlc_ioctl(dev, WLC_SET_PM, &pm, sizeof(pm))))
@@ -4850,7 +4839,7 @@ wl_iw_event(struct net_device *dev, wl_event_msg_t *e, void* data)
 			WL_DEFAULT(("Link UP\n"));
 		}
 #endif
-		WAKE_LOCK_TIMEOUT(iw->pub, 10);
+		WAKE_LOCK_TIMEOUT(iw->pub, 15);
 		wrqu.addr.sa_family = ARPHRD_ETHER;	
 		break;
 	case WLC_E_ACTION_FRAME:

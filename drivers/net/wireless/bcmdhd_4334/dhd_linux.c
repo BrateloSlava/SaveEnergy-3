@@ -611,15 +611,8 @@ static void dhd_set_packet_filter(int value, dhd_pub_t *dhd)
 				value, dhd_master_mode);
 		}
 	}
-#endif /* PKT_FILTER_SUPPORT */
-}
-
-#ifdef CONFIG_BCMDHD_WIFI_PM
-int wifi_pm = 0;
-/* /sys/module/dhd/parameters/wifi_pm */
-module_param(wifi_pm, int, 0755);
-EXPORT_SYMBOL(wifi_pm);
 #endif
+}
 
 #if defined(CONFIG_HAS_EARLYSUSPEND)
 void wl_android_set_screen_off(int off);
@@ -640,9 +633,6 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 #ifdef BCM4329_LOW_POWER
 	int ignore_bcmc = 1;
 #endif
-#ifdef CONFIG_BCMDHD_WIFI_PM
-int power_mode;
-#endif
 	char iovbuf[32];
 
 #ifdef CUSTOMER_HW2
@@ -653,20 +643,6 @@ int power_mode;
 
 	DHD_TRACE(("%s: enter, value = %d in_suspend=%d\n",
 		__FUNCTION__, value, dhd->in_suspend));
-
-#ifdef CONFIG_BCMDHD_WIFI_PM
-	if (wifi_pm == 1) {
-	power_mode = PM_FAST;
-	pr_info("[4334] %p Wi-Fi Power Management policy changed to PM_FAST.", __func__);
-	} else {
-	power_mode = PM_MAX;
-	pr_info("[4334] %p Wi-Fi Power Management policy changed to PM_MAX.", __func__);
-	}
-#else
-#ifndef SUPPORT_PM2_ONLY
-	int power_mode = PM_MAX;
-#endif
-#endif
 
 	
 	wl_android_set_screen_off(is_screen_off);
@@ -713,21 +689,11 @@ int power_mode;
 
       }
 
-
 	if (dhd && dhd->up) {
 		if (value && dhd->in_suspend) {
 #ifdef PKT_FILTER_SUPPORT
 				dhd->early_suspended = 1;
 #endif
-#ifdef CONFIG_BCMDHD_WIFI_PM
-				dhd_wl_ioctl_cmd(dhd, WLC_SET_PM, (char *)&power_mode, sizeof(power_mode), TRUE, 0);
-#else
-#ifndef SUPPORT_PM2_ONLY
-				dhd_wl_ioctl_cmd(dhd, WLC_SET_PM, (char *)&power_mode,
-				                 sizeof(power_mode), TRUE, 0);
-#endif /* SUPPORT_PM2_ONLY */
-#endif 
-
 #ifdef BCM4329_LOW_POWER
 		if (LowPowerMode == 1) {
 			if (!hasDLNA && !allowMulticast) {
@@ -766,15 +732,6 @@ int power_mode;
 
 				
 				DHD_TRACE(("%s: Remove extra suspend setting \n", __FUNCTION__));
-#ifdef CONFIG_BCMDHD_WIFI_PM
-				dhd_wl_ioctl_cmd(dhd, WLC_SET_PM, (char *)&power_mode, sizeof(power_mode), TRUE, 0);
-#else
-#ifndef SUPPORT_PM2_ONLY
-				power_mode = PM_FAST;
-				dhd_wl_ioctl_cmd(dhd, WLC_SET_PM, (char *)&power_mode,
-				                 sizeof(power_mode), TRUE, 0);
-#endif /* SUPPORT_PM2_ONLY */
-#endif /* CONFIG_BCMDHD_WIFI_PM */
 
 #ifdef PNO_SUPPORT
 				dhd_set_pfn(dhd, 0);
@@ -6031,10 +5988,10 @@ int dhd_os_wake_lock_timeout(dhd_pub_t *pub)
 #ifdef CONFIG_HAS_WAKELOCK
 		if (dhd->wakelock_rx_timeout_enable)
 			wake_lock_timeout(&dhd->wl_rxwake,
-				msecs_to_jiffies(dhd->wakelock_rx_timeout_enable)/4);
+				msecs_to_jiffies(dhd->wakelock_rx_timeout_enable));
 		if (dhd->wakelock_ctrl_timeout_enable)
 			wake_lock_timeout(&dhd->wl_ctrlwake,
-				msecs_to_jiffies(dhd->wakelock_ctrl_timeout_enable)/4);
+				msecs_to_jiffies(dhd->wakelock_ctrl_timeout_enable));
 #endif
 		dhd->wakelock_rx_timeout_enable = 0;
 		dhd->wakelock_ctrl_timeout_enable = 0;
