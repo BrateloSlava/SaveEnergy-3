@@ -16,6 +16,7 @@
 
 #ifndef _LINUX_SYNAPTICS_I2C_RMI_H
 #define _LINUX_SYNAPTICS_I2C_RMI_H
+
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
 #include <linux/input.h>
 #endif
@@ -145,8 +146,8 @@ struct synaptics_i2c_rmi_platform_data {
 	uint8_t multitouch_calibration;
 	uint8_t psensor_detection;
 	uint8_t PixelTouchThreshold_bef_unlock;
-	uint16_t block_touch_time_near;
-	uint16_t block_touch_time_far;
+	uint8_t block_touch_time_near;
+	uint8_t block_touch_time_far;
 };
 
 struct page_description {
@@ -180,6 +181,7 @@ enum {
 
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
 extern void sweep2wake_setdev(struct input_dev * input_device);
+extern unsigned int phone_call_stat;
 #endif
 
 extern uint8_t touchscreen_is_on(void);  

@@ -1,8 +1,9 @@
 /* drivers/input/touchscreen/synaptics_3200.c - Synaptics 3200 serious touch panel driver
  *
  * Copyright (C) 2011 HTC Corporation.
- * Copyright (c) 2013, Aaron Segaert asegaert@gmail.com - doubletap2wake & pocket detection
  *
+ * Sweep2wake and Doubletap2wake with pocket detection for HTC One
+ * Copyright (C) 2013 Aaron Segaert aka flar2 (asegaert at gmail.com)  
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -147,8 +148,8 @@ struct synaptics_ts_data {
 	struct synaptics_virtual_key *button;
 	wait_queue_head_t syn_fw_wait;
 	atomic_t syn_fw_condition;
-	uint16_t block_touch_time_near;
-	uint16_t block_touch_time_far;
+	uint8_t block_touch_time_near;
+	uint8_t block_touch_time_far;
 	uint8_t block_touch_event;
 };
 
@@ -174,15 +175,15 @@ extern unsigned int get_tamper_sf(void);
 
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
 
-int s2w_switch = 0;
-int dt2w_switch = 0;
-int pocket_detect = 0;
-int s2w_wakestat = 0;
-cputime64_t dt2w_time[2] = {0, 0}; 
+static int s2w_switch = 1;
+static int dt2w_switch = 1;
+static int pocket_detect = 0;
+static int s2w_wakestat = 0;
+static cputime64_t dt2w_time[2] = {0, 0}; 
 #define DT2W_TIMEOUT_MAX 290 
 #define DT2W_TIMEOUT_MIN 150
-bool scr_suspended = false, exec_count = true;
-bool scr_on_touch = false, barrier[2] = {false, false};
+static bool scr_suspended = false, exec_count = true;
+static bool scr_on_touch = false, barrier[2] = {false, false};
 static struct input_dev * sweep2wake_pwrdev;
 static DEFINE_MUTEX(pwrkeyworklock);
 static int wakesleep_vib = 0;
@@ -2023,7 +2024,6 @@ static ssize_t synaptics_sweep2wake_dump(struct device *dev,
 	if (buf[0] >= '0' && buf[0] <= '3' && buf[1] == '\n')
                 if (s2w_switch != buf[0] - '0')
 		        s2w_switch = buf[0] - '0';
-
 	return count;
 }
 
@@ -2034,9 +2034,7 @@ static ssize_t synaptics_doubletap2wake_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
 	size_t count = 0;
-
 	count += sprintf(buf, "%d\n", dt2w_switch);
-
 	return count;
 }
 
@@ -2758,6 +2756,10 @@ static void synaptics_ts_finger_func(struct synaptics_ts_data *ts)
         								finger_data[i][0] = -10;
         								finger_data[i][1] = -10;
         							}
+								if (scr_suspended && phone_call_stat == 1) {
+									finger_data[i][0] = -10;
+									finger_data[i][1] = -10; 
+								}
 #endif
 								if (ts->support_htc_event) {
 									input_report_abs(ts->input_dev, ABS_MT_AMPLITUDE,
@@ -2784,6 +2786,10 @@ static void synaptics_ts_finger_func(struct synaptics_ts_data *ts)
         								finger_data[i][0] = -10;
         								finger_data[i][1] = -10;
         							}
+								if (scr_suspended && phone_call_stat == 1) {
+									finger_data[i][0] = -10;
+									finger_data[i][1] = -10; 
+								}
 #endif
 								if (ts->support_htc_event) {
 									input_report_abs(ts->input_dev, ABS_MT_AMPLITUDE,
@@ -2811,6 +2817,10 @@ static void synaptics_ts_finger_func(struct synaptics_ts_data *ts)
         								finger_data[i][0] = -10;
         								finger_data[i][1] = -10;
         							}
+								if (scr_suspended && phone_call_stat == 1) {
+									finger_data[i][0] = -10;
+									finger_data[i][1] = -10; 
+								}
 #endif
 
 								input_report_abs(ts->input_dev, ABS_MT_TRACKING_ID, i);
@@ -2900,7 +2910,6 @@ static void synaptics_ts_finger_func(struct synaptics_ts_data *ts)
 								}
 							}
 #endif
-
 
 #ifdef ENABLE_SYNAPTICS_3K_LOGGING
 						if ((finger_press_changed & BIT(i)) && ts->debug_log_level & BIT(3)) {
@@ -4254,10 +4263,6 @@ static int synaptics_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 	}
 #endif
 
-#ifdef ENABLE_SYNAPTICS_3K_LOGGING
-	printk(KERN_INFO "[TP] %s: enter\n", __func__);
-#endif
-
 	if (ts->use_irq) {
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
 		if ((s2w_switch == 2 || s2w_switch == 0) && dt2w_switch == 0) {
@@ -4462,11 +4467,9 @@ static int synaptics_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 		}
 		ts->disable_CBC = 0;
 	}
-
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
 	if ((s2w_switch == 2 || s2w_switch == 0) && dt2w_switch == 0) {
 #endif
-
 	if (ts->power)
 		ts->power(0);
 	else {
@@ -4495,11 +4498,9 @@ static int synaptics_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 		if (ts->lpm_power)
 			ts->lpm_power(1);
 	}
-
 	if ((ts->block_touch_time_near | ts->block_touch_time_far) && ts->block_touch_event) {
 		syn_handle_block_touch(ts, 0);
 	}
-
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
 	}
 #endif
@@ -4512,8 +4513,8 @@ static int synaptics_ts_resume(struct i2c_client *client)
 	struct synaptics_ts_data *ts = i2c_get_clientdata(client);
 
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE  
-                //screen on, disable_irq_wake
-                scr_suspended = false;
+	//screen on, disable_irq_wake
+	scr_suspended = false;
 	if (s2w_wakestat == 1) 
 		disable_irq_wake(client->irq);
 #endif
@@ -4534,9 +4535,6 @@ static int synaptics_ts_resume(struct i2c_client *client)
 #endif
 		}
 #endif
-
-
-
 	} else {
 		if (ts->lpm_power)
 			ts->lpm_power(0);
