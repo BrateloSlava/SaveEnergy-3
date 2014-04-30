@@ -215,6 +215,10 @@ static void sweep2wake_presspwr(struct work_struct * sweep2wake_presspwr_work) {
 
 	if (!pocket_mode || pocket_detect == 0) {
 
+		if (wakesleep_vib) {
+		        vibrate(vib_strength);
+			wakesleep_vib = 0;
+		}
 	   	if (!mutex_trylock(&pwrkeyworklock))
 			return;
 		input_report_key(sweep2wake_pwrdev, KEY_POWER, 1);
@@ -224,10 +228,6 @@ static void sweep2wake_presspwr(struct work_struct * sweep2wake_presspwr_work) {
 		input_sync(sweep2wake_pwrdev); 
 		msleep(80);
 		mutex_unlock(&pwrkeyworklock);
-		if (wakesleep_vib) {
-		        vibrate(vib_strength);
-			wakesleep_vib = 0;
-		}
 		return;
 	}
 }
