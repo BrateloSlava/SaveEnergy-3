@@ -192,8 +192,10 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
 # Default value for CROSS_COMPILE is not to prefix executables
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
 export KBUILD_BUILDHOST := $(SUBARCH)
-ARCH		?= arm
-CROSS_COMPILE	?= arm-eabi-
+ARCH		?= $(SUBARCH)
+CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
+ARCH		:= arm
+CROSS_COMPILE	:= arm-gnueabi-
 
 # Architecture as present in compile.h
 UTS_MACHINE 	:= $(ARCH)
@@ -352,21 +354,13 @@ CC		= $(srctree)/scripts/gcc-wrapper.py $(REAL_CC)
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
 
-CUSTOM_FLAG	= -fgcse-lm -fgcse-sm -fsched-spec-load -fgcse-after-reload \
-		  -fforce-addr -ffast-math  -fsingle-precision-constant \
-		  -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -ftree-vectorize  \
-		  -mvectorize-with-neon-quad -marm \
-		  -funroll-loops -mvectorize-with-neon-quad -pipe \
-		  -fgraphite -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block \
-		  -munaligned-access -fpredictive-commoning
-
-CFLAGS_MODULE   = -DMODULE -fno-pic $(CUSTOM_FLAG)
-AFLAGS_MODULE   = -DMODULE $(CUSTOM_FLAG)
+CFLAGS_MODULE   = -Os
+FLAGS_MODULE   =
 LDFLAGS_MODULE  = 
-CFLAGS_KERNEL	= $(CUSTOM_FLAG)
-AFLAGS_KERNEL	= $(CUSTOM_FLAG)
+CFLAGS_KERNEL	= -mcpu=cortex-a15 -mtune=cortex-a15 -fgraphite-identity
+# -mtls-dialect=gnu2 -fgraphite-identity
+AFLAGS_KERNEL	= 
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
-
 
 # Use LINUXINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
@@ -377,17 +371,16 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
-KBUILD_CFLAGS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -Wmaybe-uninitialized\
-	-fno-strict-aliasing -fno-common \
-	-Werror-implicit-function-declaration \
-	-Wno-format-security \
-	-fno-delete-null-pointer-checks $(CUSTOM_FLAG)
-
-KBUILD_AFLAGS_KERNEL := $(KBUILD_CFLAGS)
-KBUILD_CFLAGS_KERNEL := $(KBUILD_CFLAGS)
+KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
+		   -fno-strict-aliasing -fno-common \
+		   -Werror-implicit-function-declaration \
+		   -Wno-format-security \
+		   -fno-delete-null-pointer-checks
+KBUILD_AFLAGS_KERNEL :=
+KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
-KBUILD_AFLAGS_MODULE  := -DMODULE $(KBUILD_CFLAGS)
-KBUILD_CFLAGS_MODULE  := -DMODULE $(KBUILD_CFLAGS)
+KBUILD_AFLAGS_MODULE  := -DMODULE
+KBUILD_CFLAGS_MODULE  := -DMODULE
 KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
@@ -573,16 +566,13 @@ endif # $(dot-config)
 all: vmlinux
 
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
-KBUILD_CFLAGS	+= -Os
-endif
-ifdef CONFIG_CC_OPTIMIZE_DEFAULT
-KBUILD_CFLAGS	+= -O2
-endif
-ifdef CONFIG_CC_OPTIMIZE_ALOT
-KBUILD_CFLAGS	+= -O3
-endif
-ifdef CONFIG_CC_OPTIMIZE_FAST
-KBUILD_CFLAGS	+= -Ofast
+KBUILD_CFLAGS	+= -Os -falign-functions -falign-jumps -falign-loops -falign-labels -freorder-blocks
+else
+#KBUILD_CFLAGS	+= -O2 -fno-reorder-blocks-and-partition
+KBUILD_CFLAGS	+= -O2 -marm -mtune=cortex-a15 -mcpu=cortex-a15 -mfpu=neon-vfpv4 -fno-reorder-blocks-and-partition \
+			-fgraphite -mvectorize-with-neon-quad -fgcse-sm -fivopts -fvect-cost-model=unlimited \
+			-ftree-partial-pre -funswitch-loops -fpredictive-commoning -fgcse-after-reload -ftree-vectorize \
+			-fira-loop-pressure
 endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
