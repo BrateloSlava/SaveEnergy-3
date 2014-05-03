@@ -70,7 +70,6 @@ enum {
 	FINGER_2_REPORT = 1 << 1,
 };
 
-#ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_3K
 struct synaptics_virtual_key {
 	int index;
 	int keycode;
@@ -79,14 +78,12 @@ struct synaptics_virtual_key {
 	int y_range_min;
 	int y_range_max;
 };
-#endif
 
 struct synaptics_i2c_rmi_platform_data {
-	uint32_t version;	/* Use this entry for panels with */
-				/* (major << 8 | minor) version or above. */
-				/* If non-zero another array entry follows */
-	int (*power)(int on);	/* Only valid in first array entry */
-#ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_3K
+	uint32_t version;	
+				
+				
+	int (*power)(int on);	
 	int (*lpm_power)(int on);
 	struct synaptics_virtual_key *virtual_key;
 	uint8_t virtual_key_num;
@@ -96,37 +93,31 @@ struct synaptics_i2c_rmi_platform_data {
 	uint8_t finger_support;
 	uint32_t gap_area;
 	uint32_t key_area;
-#endif
 	uint32_t flags;
 	unsigned long irqflags;
-	uint32_t inactive_left; /* 0x10000 = screen width */
-	uint32_t inactive_right; /* 0x10000 = screen width */
-	uint32_t inactive_top; /* 0x10000 = screen height */
-	uint32_t inactive_bottom; /* 0x10000 = screen height */
-	uint32_t snap_left_on; /* 0x10000 = screen width */
-	uint32_t snap_left_off; /* 0x10000 = screen width */
-	uint32_t snap_right_on; /* 0x10000 = screen width */
-	uint32_t snap_right_off; /* 0x10000 = screen width */
-	uint32_t snap_top_on; /* 0x10000 = screen height */
-	uint32_t snap_top_off; /* 0x10000 = screen height */
-	uint32_t snap_bottom_on; /* 0x10000 = screen height */
-	uint32_t snap_bottom_off; /* 0x10000 = screen height */
-	uint32_t fuzz_x; /* 0x10000 = screen width */
-	uint32_t fuzz_y; /* 0x10000 = screen height */
-#ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_3K
+	uint32_t inactive_left; 
+	uint32_t inactive_right; 
+	uint32_t inactive_top; 
+	uint32_t inactive_bottom; 
+	uint32_t snap_left_on; 
+	uint32_t snap_left_off; 
+	uint32_t snap_right_on; 
+	uint32_t snap_right_off; 
+	uint32_t snap_top_on; 
+	uint32_t snap_top_off; 
+	uint32_t snap_bottom_on; 
+	uint32_t snap_bottom_off; 
+	uint32_t fuzz_x; 
+	uint32_t fuzz_y; 
 	int abs_x_min;
 	int abs_x_max;
 	int abs_y_min;
 	int abs_y_max;
-#endif
 	int fuzz_p;
 	int fuzz_w;
-#ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_3K
 	uint32_t display_width;
 	uint32_t display_height;
-#endif
 	int8_t sensitivity_adjust;
-#ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_3K
 	uint32_t dup_threshold;
 	uint32_t margin_inactive_pixel[4];
 	uint16_t filter_level[4];
@@ -156,10 +147,8 @@ struct synaptics_i2c_rmi_platform_data {
 	uint8_t PixelTouchThreshold_bef_unlock;
 	uint8_t block_touch_time_near;
 	uint8_t block_touch_time_far;
-#endif
 };
 
-#ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_3K
 struct page_description {
 	uint8_t addr;
 	uint8_t value;
@@ -197,6 +186,4 @@ extern unsigned int phone_call_stat;
 extern uint8_t touchscreen_is_on(void);  
 
 extern uint8_t getPowerKeyState(void);
-#endif /* CONFIG_TOUCHSCREEN_SYNAPTICS_3K */
-#endif /* _LINUX_SYNAPTICS_I2C_RMI_H */
-
+#endif 
