@@ -68,7 +68,7 @@ static struct mutex gov_lock;
 static unsigned int hispeed_freq;
 
 /* Go to hi speed when CPU load at or above this value. */
-#define DEFAULT_GO_HISPEED_LOAD 90
+#define DEFAULT_GO_HISPEED_LOAD 99
 static unsigned long go_hispeed_load = DEFAULT_GO_HISPEED_LOAD;
 
 /* Sampling down factor to be applied to min_sample_time at max freq */
@@ -125,7 +125,7 @@ static bool io_is_busy;
 
 /*
  * If the max load among other CPUs is higher than up_threshold_any_cpu_load
- * and if the highest frequency among the other CPUs is higher than
+ * or if the highest frequency among the other CPUs is higher than
  * up_threshold_any_cpu_freq then do not let the frequency to drop below
  * sync_freq
  */
@@ -803,9 +803,9 @@ static ssize_t show_target_loads(
 		ret += sprintf(buf + ret, "%u%s", target_loads[i],
 			       i & 0x1 ? ":" : " ");
 
-	ret += sprintf(buf + --ret, "\n");
+	ret += sprintf(buf + (ret - 1), "\n");
 	spin_unlock_irqrestore(&target_loads_lock, flags);
-	return ret;
+	return ret - 1;
 }
 
 static ssize_t store_target_loads(
@@ -846,9 +846,9 @@ static ssize_t show_above_hispeed_delay(
 		ret += sprintf(buf + ret, "%u%s", above_hispeed_delay[i],
 			       i & 0x1 ? ":" : " ");
 
-	ret += sprintf(buf + --ret, "\n");
+	ret += sprintf(buf + ret - 1, "\n");
 	spin_unlock_irqrestore(&above_hispeed_delay_lock, flags);
-	return ret;
+	return ret - 1;
 }
 
 static ssize_t store_above_hispeed_delay(

@@ -834,12 +834,11 @@ EXPORT_SYMBOL_GPL(fat_get_dotdot_entry);
 int fat_dir_empty(struct inode *dir)
 {
 	struct buffer_head *bh;
-	struct msdos_dir_entry *de;
+	struct msdos_dir_entry *de = NULL;
 	loff_t cpos;
 	int result = 0;
 
 	bh = NULL;
-	de = NULL;
 	cpos = 0;
 	while (fat_get_short_entry(dir, &cpos, &bh, &de) >= 0) {
 		if (strncmp(de->name, MSDOS_DOT   , MSDOS_NAME) &&
@@ -857,12 +856,11 @@ EXPORT_SYMBOL_GPL(fat_dir_empty);
 int fat_subdirs(struct inode *dir)
 {
 	struct buffer_head *bh;
-	struct msdos_dir_entry *de;
+	struct msdos_dir_entry *de = NULL;
 	loff_t cpos;
 	int count = 0;
 
 	bh = NULL;
-	de = NULL;
 	cpos = 0;
 	while (fat_get_short_entry(dir, &cpos, &bh, &de) >= 0) {
 		if (de->attr & ATTR_DIR)

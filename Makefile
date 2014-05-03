@@ -352,25 +352,13 @@ CC		= $(srctree)/scripts/gcc-wrapper.py $(REAL_CC)
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
 
-CUSTOM_FLAG	= -fgcse-sm -fsched-spec-load \
-		  -fforce-addr -fsingle-precision-constant \
+CUSTOM_FLAG	= -fgcse-lm -fgcse-sm -fsched-spec-load -fgcse-after-reload \
+		  -fforce-addr -ffast-math  -fsingle-precision-constant \
 		  -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -ftree-vectorize  \
-		  -mvectorize-with-neon-quad -pipe -marm \
-		  -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block \
-		  -fno-default-inline -fno-inline-functions-called-once -ffast-math
-
-ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
-CUSTOM_FLAG	+= -Os
-endif
-ifdef CONFIG_CC_OPTIMIZE_DEFAULT
-CUSTOM_FLAG	+= -O2
-endif
-ifdef CONFIG_CC_OPTIMIZE_ALOT
-CUSTOM_FLAG	+= -O3
-endif
-ifdef CONFIG_CC_OPTIMIZE_FAST
-CUSTOM_FLAG	+= -Ofast
-endif
+		  -mvectorize-with-neon-quad -marm \
+		  -funroll-loops -mvectorize-with-neon-quad -pipe \
+		  -fgraphite -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block \
+		  -munaligned-access -fpredictive-commoning
 
 CFLAGS_MODULE   = -DMODULE -fno-pic $(CUSTOM_FLAG)
 AFLAGS_MODULE   = -DMODULE $(CUSTOM_FLAG)
@@ -584,7 +572,18 @@ endif # $(dot-config)
 # Defaults to vmlinux, but the arch makefile usually adds further targets
 all: vmlinux
 
-
+ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
+KBUILD_CFLAGS	+= -Os
+endif
+ifdef CONFIG_CC_OPTIMIZE_DEFAULT
+KBUILD_CFLAGS	+= -O2
+endif
+ifdef CONFIG_CC_OPTIMIZE_ALOT
+KBUILD_CFLAGS	+= -O3
+endif
+ifdef CONFIG_CC_OPTIMIZE_FAST
+KBUILD_CFLAGS	+= -Ofast
+endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
 
