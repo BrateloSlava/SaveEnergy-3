@@ -569,7 +569,7 @@ ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os -falign-functions -falign-jumps -falign-loops -falign-labels -freorder-blocks
 else
 #KBUILD_CFLAGS	+= -O2 -fno-reorder-blocks-and-partition
-KBUILD_CFLAGS	+= -O2 -marm -mtune=cortex-a15 -mcpu=cortex-a15 -mfpu=neon-vfpv4 -fno-reorder-blocks-and-partition \
+KBUILD_CFLAGS	+= -O2 -marm -mtune=cortex-a15 -mcpu=cortex-a15 -mfpu=neon-vfpv4 -ffast-math \
 			-fgraphite -mvectorize-with-neon-quad -fgcse-sm -fivopts -fvect-cost-model=unlimited \
 			-ftree-partial-pre -funswitch-loops -fpredictive-commoning -fgcse-after-reload -ftree-vectorize \
 			-fira-loop-pressure

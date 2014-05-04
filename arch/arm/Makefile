@@ -58,7 +58,7 @@ comma = ,
 # macro, but instead defines a whole series of macros which makes
 # testing for a specific architecture or later rather impossible.
 #arch-$(CONFIG_CPU_32v7)		=-D__LINUX_ARM_ARCH__=7 $(call cc-option,-march=armv7-a,-mcpu=cortex-a9 -Wa$(comma)-march=armv7-a)
-CUSTOM_FLAG	= -marm -mtune=cortex-a15 -mcpu=cortex-a15 -mfpu=neon-vfpv4 -fno-reorder-blocks-and-partition \
+CUSTOM_FLAG	= -marm -mtune=cortex-a15 -mcpu=cortex-a15 -mfpu=neon-vfpv4 -ffast-math \
 			-fgraphite -mvectorize-with-neon-quad -fgcse-sm -fivopts -fvect-cost-model=unlimited \
 			-ftree-partial-pre -funswitch-loops -fpredictive-commoning -fgcse-after-reload -ftree-vectorize \
 			-fira-loop-pressure
