@@ -24,28 +24,12 @@ void __check_kvm_seq(struct mm_struct *mm);
 
 #ifdef CONFIG_CPU_HAS_ASID
 
-#define ASID_BITS		8
-#define ASID_MASK		((~0) << ASID_BITS)
-#define ASID_FIRST_VERSION	(1 << ASID_BITS)
-
-extern unsigned int cpu_last_asid;
 #ifdef CONFIG_SMP
 DECLARE_PER_CPU(struct mm_struct *, current_mm);
 #endif
 
-void __init_new_context(struct task_struct *tsk, struct mm_struct *mm);
-void __new_context(struct mm_struct *mm);
-
-static inline void check_context(struct mm_struct *mm)
-{
-	if (unlikely((mm->context.id ^ cpu_last_asid) >> ASID_BITS))
-		__new_context(mm);
-
-	if (unlikely(mm->context.kvm_seq != init_mm.context.kvm_seq))
-		__check_kvm_seq(mm);
-}
-
-#define init_new_context(tsk,mm)	(__init_new_context(tsk,mm),0)
+void check_and_switch_context(struct mm_struct *mm, struct task_struct *tsk);
+#define init_new_context(tsk,mm)	({ mm->context.id = 0; })
 
 #else
 
@@ -62,12 +46,27 @@ static inline void check_context(struct mm_struct *mm)
 #endif
 
 #define destroy_context(mm)		do { } while(0)
-
+#define activate_mm(prev,next)		switch_mm(prev, next, NULL)
+/*
+ * This is called when "tsk" is about to enter lazy TLB mode.
+ *
+ * mm:  describes the currently active mm context
+ * tsk: task which is entering lazy tlb
+ * cpu: cpu number which is entering lazy tlb
+ *
+ * tsk->mm will be NULL
+ */
 static inline void
 enter_lazy_tlb(struct mm_struct *mm, struct task_struct *tsk)
 {
 }
 
+/*
+ * This is the actual mm switch as far as the scheduler
+ * is concerned.  No registers are touched.  We avoid
+ * calling the CPU specific function when the mm hasn't
+ * actually changed.
+ */
 static inline void
 switch_mm(struct mm_struct *prev, struct mm_struct *next,
 	  struct task_struct *tsk)
@@ -76,7 +75,7 @@ switch_mm(struct mm_struct *prev, struct mm_struct *next,
 	unsigned int cpu = smp_processor_id();
 
 #ifdef CONFIG_SMP
-	
+	/* check for possible thread migration */
 	if (!cpumask_empty(mm_cpumask(next)) &&
 	    !cpumask_test_cpu(cpu, mm_cpumask(next)))
 		__flush_icache_all();
@@ -86,8 +85,7 @@ switch_mm(struct mm_struct *prev, struct mm_struct *next,
 		struct mm_struct **crt_mm = &per_cpu(current_mm, cpu);
 		*crt_mm = next;
 #endif
-		check_context(next);
-		cpu_switch_mm(next->pgd, next);
+		check_and_switch_context(next, tsk);
 		if (cache_is_vivt())
 			cpumask_clear_cpu(cpu, mm_cpumask(prev));
 	}
@@ -95,6 +93,5 @@ switch_mm(struct mm_struct *prev, struct mm_struct *next,
 }
 
 #define deactivate_mm(tsk,mm)	do { } while (0)
-#define activate_mm(prev,next)	switch_mm(prev, next, NULL)
 
 #endif
