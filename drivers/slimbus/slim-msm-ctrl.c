@@ -218,7 +218,7 @@ enum mgr_intr {
 enum frm_cfg {
 	FRM_ACTIVE	= 1,
 	CLK_GEAR	= 10,
-	ROOT_FREQ	= 31,
+	ROOT_FREQ	= 11,
 	REF_CLK_GEAR	= 15,
 };
 
@@ -851,12 +851,21 @@ static int msm_xfer_msg(struct slim_controller *ctrl, struct slim_msg_txn *txn)
 		}
 		if (txn->mt == SLIM_MSG_MT_CORE &&
 			txn->mc == SLIM_MSG_MC_RECONFIGURE_NOW) {
+			if (timeout) {
+				timeout =
+				wait_for_completion_timeout(&dev->reconf, HZ);
+				dev->reconf_busy = false;
+			}
 			if (dev->ctrl.sched.usedslots == 0 &&
 					dev->chan_active) {
 				dev->chan_active = false;
 				msm_slim_put_ctrl(dev);
 			}
 		}
+	}
+	if (mc == SLIM_USR_MC_GENERIC_ACK) {
+		u32 mgrstat = readl_relaxed(dev->base + MGR_STATUS);
+		pr_info("[AUD] generic ack:0x %x, mgrstat:0x%x", pbuf[0], mgrstat);
 	}
 	mutex_unlock(&dev->tx_lock);
 	if (msgv >= 0)
