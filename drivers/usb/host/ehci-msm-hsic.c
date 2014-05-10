@@ -75,7 +75,9 @@ static struct delayed_work register_usb_notification_work;
 void mdm_hsic_print_pm_info(void);
 
 static void mdm_hsic_print_usb_dev_pm_info(struct usb_device *udev);
+#ifdef HTC_PM_DBG
 static void mdm_hsic_print_interface_pm_info(struct usb_device *udev);
+#endif
 static bool usb_device_recongnized = false;
 unsigned long  mdm_hsic_phy_resume_jiffies = 0;
 unsigned long  mdm_hsic_phy_active_total_ms = 0;
@@ -637,6 +639,8 @@ static void mdm_hsic_pm_monitor_func(struct work_struct *work)
 	schedule_delayed_work(&mdm_hsic_pm_monitor_delayed_work, msecs_to_jiffies(HSIC_PM_MON_DELAY));
 
 }
+
+#ifdef HTC_PM_DBG
 static void mdm_hsic_print_interface_pm_info(struct usb_device *udev)
 {
 	struct usb_interface *intf;
@@ -667,11 +671,13 @@ static void mdm_hsic_print_interface_pm_info(struct usb_device *udev)
 		printk("\n");
 	}
 }
+#endif
+
 static void mdm_hsic_print_usb_dev_pm_info(struct usb_device *udev)
 {
 	if (udev != NULL) {
-		struct device *dev = &(udev->dev);
 #ifdef HTC_PM_DBG
+		struct device *dev = &(udev->dev);
 		if (usb_pm_debug_enabled) {
 			dev_info(&udev->dev, "[HSIC_PM_DBG] is_suspend:%d usage_count:%d last_busy:%8lx auto_suspend_timer_set:%d timer_expires:%8lx jiffies:%lx\n",
 				udev->is_suspend,

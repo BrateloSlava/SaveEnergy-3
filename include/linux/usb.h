@@ -22,7 +22,7 @@
 #include <linux/mutex.h>	
 #include <linux/pm_runtime.h>	
 
-#define HTC_PM_DBG
+//#define HTC_PM_DBG
 
 struct usb_device;
 struct usb_driver;
