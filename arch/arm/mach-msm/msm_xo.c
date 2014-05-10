@@ -192,9 +192,9 @@ static void msm_xo_print_xo(struct msm_xo *xo,
 
 	if(xo->mode == MSM_XO_MODE_OFF)
 		return;
-	pr_info("%-20s%s\n", name, msm_xo_mode_to_str[xo->mode]);
+	pr_debug("%-20s%s\n", name, msm_xo_mode_to_str[xo->mode]);
 	list_for_each_entry(voter, &xo->voters, list)
-		pr_info(" %s %-16s %s\n",
+		pr_debug(" %s %-16s %s\n",
 				xo->mode == voter->mode ? "*" : " ",
 				voter->name,
 				msm_xo_mode_to_str[voter->mode]);

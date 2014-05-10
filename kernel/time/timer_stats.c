@@ -268,9 +268,9 @@ void htc_prink_name_offset(unsigned long addr)
 	char symname[KSYM_NAME_LEN];
 
 	if (lookup_symbol_name(addr, symname) < 0)
-		printk("<%p>", (void *)addr);
+		pr_debug("<%p>", (void *)addr);
 	else
-		printk("%s", symname);
+		pr_debug("%s", symname);
 }
 
 
@@ -297,17 +297,17 @@ void htc_timer_stats_show(u16 water_mark)
 		if (entry->count < water_mark)
 			continue;
 		if (entry->timer_flag & TIMER_STATS_FLAG_DEFERRABLE) {
-			printk("%4luD, %5d %-16s ",
+			pr_debug("%4luD, %5d %-16s ",
 				entry->count, entry->pid, entry->comm);
 		} else {
-			printk(" %4lu, %5d %-16s ",
+			pr_debug(" %4lu, %5d %-16s ",
 				entry->count, entry->pid, entry->comm);
 		}
 
 		htc_prink_name_offset((unsigned long)entry->start_func);
-		printk(" (");
+		pr_debug(" (");
 		htc_prink_name_offset((unsigned long)entry->expire_func);
-		printk(")\n");
+		pr_debug(")\n");
 	}
 
 	ms += period.tv_sec * 1000;
@@ -315,11 +315,11 @@ void htc_timer_stats_show(u16 water_mark)
 		ms = 1;
 
 	if (events && period.tv_sec)
-		printk("%ld total events, %ld.%03ld events/sec\n",
+		pr_debug("%ld total events, %ld.%03ld events/sec\n",
 			   events, events * 1000 / ms,
 			   (events * 1000000 / ms) % 1000);
 	else
-		printk("%ld total events\n", events);
+		pr_debug("%ld total events\n", events);
 
 	mutex_unlock(&show_mutex);
 }
