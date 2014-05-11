@@ -211,7 +211,7 @@ static void syn_handle_block_touch(struct synaptics_ts_data *ts, int enable)
 #define S2W_START 3
 #define S2W_TIMEOUT 35
 #define S2W_TIMEOUT2 60
-#define S2W_TIMEOUT3 70
+#define S2W_TIMEOUT3 50
 #define DT2W_TIMEOUT_MAX 400
 #define DT2W_DELTA 230
 #define WAKE_GESTURE 0x0b
@@ -219,6 +219,7 @@ static void syn_handle_block_touch(struct synaptics_ts_data *ts, int enable)
 static bool scr_suspended = false;
 static int button_id = 0;
 static int s2w_switch = 1;
+static int su2w_switch = 1;
 static int gestures_switch = 1;
 static int dt2w_switch = 1;
 static int pocket_detect = 1;
@@ -263,6 +264,9 @@ static void report_gesture(int gest)
 	if ((pocket_detect && !pocket_detection_check()) || !pocket_detect) {
 		input_report_rel(gesture_dev, WAKE_GESTURE, gest);
 		input_sync(gesture_dev);
+
+	if (wake_lock_active(&l2w_wakelock))
+		wake_unlock(&l2w_wakelock);
 	}
 }
 
@@ -343,6 +347,19 @@ static int __init get_s2w_opt(char *s2w)
 
 __setup("s2w=", get_s2w_opt); 
 
+static int __init get_su2w_opt(char *su2w)
+{
+	if (strcmp(su2w, "0") == 0) {
+		su2w_switch = 0;
+	} else if (strcmp(su2w, "1") == 0) {
+		su2w_switch = 1;
+	} else {
+		su2w_switch = 0;
+	}
+	return 1;
+}
+
+__setup("su2w=", get_su2w_opt); 
 
 static int __init get_wges_opt(char *wges)
 {
@@ -1954,6 +1971,25 @@ static ssize_t synaptics_sweep2wake_dump(struct device *dev,
 static DEVICE_ATTR(sweep2wake, 0666,
 	synaptics_sweep2wake_show, synaptics_sweep2wake_dump);
 
+static ssize_t synaptics_sweepup2wake_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	size_t count = 0;
+	count += sprintf(buf, "%d\n", su2w_switch);
+	return count;
+}
+
+static ssize_t synaptics_sweepup2wake_dump(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	if (buf[0] >= '0' && buf[0] <= '1' && buf[1] == '\n')
+                if (su2w_switch != buf[0] - '0')
+		        su2w_switch = buf[0] - '0';
+	return count;
+}
+
+static DEVICE_ATTR(sweepup2wake, 0666,
+	synaptics_sweepup2wake_show, synaptics_sweepup2wake_dump);
 
 static ssize_t synaptics_wake_gestures_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -2161,6 +2197,11 @@ static int synaptics_touch_sysfs_init(void)
 		printk(KERN_ERR "%s: sysfs_create_file failed\n", __func__);
 		return ret;
 	}
+	ret = sysfs_create_file(android_touch_kobj, &dev_attr_sweepup2wake.attr);
+	if (ret) {
+		printk(KERN_ERR "%s: sysfs_create_file failed\n", __func__);
+		return ret;
+	}
 	ret = sysfs_create_file(android_touch_kobj, &dev_attr_wake_gestures.attr);
 	if (ret) {
 		printk(KERN_ERR "%s: sysfs_create_file failed\n", __func__);
@@ -2233,6 +2274,7 @@ static void synaptics_touch_sysfs_remove(void)
 	sysfs_remove_file(android_touch_kobj, &dev_attr_sr_en.attr);
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
 	sysfs_remove_file(android_touch_kobj, &dev_attr_sweep2wake.attr);
+	sysfs_remove_file(android_touch_kobj, &dev_attr_sweepup2wake.attr);
 	sysfs_remove_file(android_touch_kobj, &dev_attr_wake_gestures.attr);
 	sysfs_remove_file(android_touch_kobj, &dev_attr_doubletap2wake.attr);
 	sysfs_remove_file(android_touch_kobj, &dev_attr_pocket_detect.attr);
@@ -2365,15 +2407,13 @@ static void reset_sv2w(void)
 static void sweep2wake_vert_func(int x, int y)
 {
 	int prevy = 0, nexty = 0;
-	
-	//printk("[sweep2wake_vert_func] firsty:%d\n", firsty);
 
 	if (firsty == 0)
 		firsty = y;
 	if (firsty > 1800)
 		reset_sv2w();
-
-	if (x > 70 && x < 880) {
+	//sweep up
+	if ((x > 70 && x < 880) && (su2w_switch || gestures_switch)) {
 		if (firsty > 900) {
 			prevy = firsty;
 			nexty = prevy - 150;
@@ -2387,16 +2427,21 @@ static void sweep2wake_vert_func(int x, int y)
 					if (y < prevy) {
 						if (y < (nexty - 150)) {
 							if (exec_county) {
-								pr_info("wake_gesture: sweep up\n");
+								pr_debug("wake_gesture: sweep up\n");
 								wake_lock_timeout(&l2w_wakelock, HZ/2);
-								report_gesture(3);
+								if (gestures_switch)
+									report_gesture(3);
+								else
+									wakesleep_vib = 1;
+									sweep2wake_pwrtrigger();
 								exec_county = false;
 							}
 						}
 					}
 				}
 			}
-		} else if (firsty <= 900) {
+		//sweep down
+		} else if ((firsty <= 900) && gestures_switch) {
 			prevy = firsty;
 			nexty = prevy + 150;
 			if (barriery[0] == true || (y > prevy && y < nexty)) {
@@ -2409,7 +2454,7 @@ static void sweep2wake_vert_func(int x, int y)
 					if (y > prevy) {
 						if (y > (nexty + 150)) {
 							if (exec_county) {
-								pr_info("wake_gesture: sweep down\n");
+								pr_debug("wake_gesture: sweep down\n");
 								wake_lock_timeout(&l2w_wakelock, HZ/2);
 								report_gesture(4);
 								exec_county = false;
@@ -2422,8 +2467,6 @@ static void sweep2wake_vert_func(int x, int y)
 	}
 }
 
-
-
 static void reset_sh2w(void)
 {
 	exec_countx = true;
@@ -2435,8 +2478,6 @@ static void reset_sh2w(void)
 static void sweep2wake_horiz_func(int x, int y)
 {
         int prevx = 0, nextx = 0;
-
-	//printk("[sweep2wake_horiz_func] firstx:%d\n", firstx);
 
 	if (firstx == 0)
 		firstx = x;
@@ -2457,7 +2498,7 @@ static void sweep2wake_horiz_func(int x, int y)
 				if (x > prevx) {
 					if (x > (nextx + 150)) {
 						if (exec_countx) {
-							pr_info("wake_gesture: sweep right\n");
+							pr_debug("wake_gesture: sweep right\n");
 							wake_lock_timeout(&l2w_wakelock, HZ/2);
 							report_gesture(1);
 							exec_countx = false;
@@ -2480,7 +2521,7 @@ static void sweep2wake_horiz_func(int x, int y)
 				if (x < prevx  && y < 1820) {
 					if (x < (nextx - 150)) {
 						if (exec_countx) {
-							pr_info("wake_gesture: sweep left\n");
+							pr_debug("wake_gesture: sweep left\n");
 							wake_lock_timeout(&l2w_wakelock, HZ/2);
 							report_gesture(2);
 							exec_countx = false;
@@ -2510,7 +2551,7 @@ static void sweep2wake_func(int button_id) {
 	if ((s2w_time[0]-s2w_time[1]) < S2W_TIMEOUT && (s2w_time[0]-s2w_time[1]) > S2W_START) {
 
 		if ((s2w_switch == 1 || gestures_switch) && (s2w_hist[1] == 1 && s2w_hist[0] == 2) && scr_suspended) {
-                	pr_info("[S2W]: OFF->ON\n");
+                	pr_debug("[S2W]: OFF->ON\n");
 			reset_sweep2wake();
 			if (gestures_switch) {
 				report_gesture(1);
@@ -2523,8 +2564,9 @@ static void sweep2wake_func(int button_id) {
 			reset_sweep2wake();
 			if (gestures_switch && scr_suspended) {
 				report_gesture(2);
-			} else if (!scr_suspended) {
+			} else if (!scr_suspended && s2w_switch > 0) {
 		        	pr_debug("[S2W]: ON->OFF\n");
+				wakesleep_vib = 1;
 				sweep2wake_pwrtrigger();
 			}
 		} else {
@@ -2549,7 +2591,7 @@ static void reset_dt2w(void)
 
 static void dt2w_func(int x, int y, cputime64_t trigger_time)
 {
-        if (!gestures_switch && dt2w_switch == 1 && (y > 0 && y < 1820)) {
+        if (y > 1740 || (!gestures_switch && dt2w_switch == 1 && (y > 0 && y < 1820))) {
                 reset_dt2w();
                 return;
         }
@@ -2566,7 +2608,7 @@ static void dt2w_func(int x, int y, cputime64_t trigger_time)
                 if (((abs(x - prev_x) < DT2W_DELTA) && (abs(y - prev_y) < DT2W_DELTA))
 						|| (prev_x == 0 && prev_y == 0)) {
                         reset_dt2w();
-			pr_info("[DT2W]: ON\n");
+			pr_debug("[DT2W]: ON\n");
 			wake_lock_timeout(&l2w_wakelock, HZ/2);
 			if (gestures_switch) {
 				report_gesture(5);
@@ -2752,7 +2794,7 @@ static void synaptics_ts_finger_func(struct synaptics_ts_data *ts)
 			dt2w_func(last_touch_position_x, last_touch_position_y, dt_trigger_time);
 		}
 
-		if (gestures_switch) {
+		if (gestures_switch || su2w_switch) {
 			reset_sv2w();
 			reset_sh2w();
 		}
@@ -2912,10 +2954,10 @@ static void synaptics_ts_finger_func(struct synaptics_ts_data *ts)
 						finger_pressed &= ~BIT(i);
 
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
-						if (gestures_switch && scr_suspended) {
-							sweep2wake_vert_func(x_pos[0], y_pos[0]);
+						if (gestures_switch && scr_suspended)
 							sweep2wake_horiz_func(x_pos[0], y_pos[0]);
-						}
+						if ((gestures_switch || su2w_switch) && scr_suspended)
+							sweep2wake_vert_func(x_pos[0], y_pos[0]);
 #endif	
 
 						if ((finger_press_changed & BIT(i)) && ts->debug_log_level & BIT(3)) {
@@ -3156,7 +3198,7 @@ static void synaptics_ts_button_func(struct synaptics_ts_data *ts)
 		vk_press = 0;
 
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
-		if (s2w_switch == 1 || s2w_switch == 2 || gestures_switch) {
+		if (s2w_switch || su2w_switch || gestures_switch) {
 			sweep2wake_func(button_id);
 		}
 				
@@ -4098,7 +4140,6 @@ err_check_functionality_failed:
 static int synaptics_ts_remove(struct i2c_client *client)
 {
 	struct synaptics_ts_data *ts = i2c_get_clientdata(client);
-
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	unregister_early_suspend(&ts->early_suspend);
 #endif
@@ -4135,7 +4176,7 @@ static int synaptics_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 	printk(KERN_INFO "[TP] %s: enter\n", __func__);
 
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
-	if (s2w_switch == 1 || dt2w_switch > 0 || gestures_switch == 1) {
+	if (s2w_switch == 1 || dt2w_switch > 0 || su2w_switch || gestures_switch) {
 		//screen off, enable_irq_wake
 		enable_irq_wake(client->irq);
 	}
@@ -4143,7 +4184,7 @@ static int synaptics_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 
 	if (ts->use_irq) {
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
-		if ((s2w_switch == 2 || s2w_switch == 0) && dt2w_switch == 0 && gestures_switch == 0) {
+		if ((s2w_switch == 2 || s2w_switch == 0) && !dt2w_switch && !su2w_switch && !gestures_switch) {
 #endif
 			disable_irq(client->irq);
 			ts->irq_enabled = 0;
@@ -4154,7 +4195,7 @@ static int synaptics_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 		hrtimer_cancel(&ts->timer);
 		ret = cancel_work_sync(&ts->work);
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
-	if ((s2w_switch == 2 || s2w_switch == 0) && dt2w_switch == 0 && gestures_switch == 0) {
+	if ((s2w_switch == 2 || s2w_switch == 0) && !dt2w_switch && !su2w_switch && !gestures_switch) {
 		if (ret && ts->use_irq) /* if work was pending disable-count is now 2 */
 			enable_irq(client->irq);
 	}
@@ -4324,7 +4365,7 @@ static int synaptics_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 		ts->disable_CBC = 0;
 	}
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
-	if ((s2w_switch == 2 || s2w_switch == 0) && dt2w_switch == 0 && gestures_switch == 0) {
+	if ((s2w_switch == 2 || s2w_switch == 0) && !dt2w_switch && !su2w_switch && !gestures_switch) {
 #endif
 	if (ts->power)
 		ts->power(0);
@@ -4374,10 +4415,10 @@ static int synaptics_ts_resume(struct i2c_client *client)
 
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE  
         //screen on, disable_irq_wake
-	if (s2w_switch == 1 || dt2w_switch > 0 || gestures_switch == 1)
+	if (s2w_switch == 1 || dt2w_switch || su2w_switch || gestures_switch)
 		disable_irq_wake(client->irq);
 
-        if ((s2w_switch == 2 || s2w_switch == 0) && dt2w_switch == 0 && gestures_switch) {
+        if ((s2w_switch == 2 || s2w_switch == 0) && !dt2w_switch && !su2w_switch && !gestures_switch) {
 #endif 
 	if (ts->power) {
 		ts->power(1);
@@ -4426,7 +4467,7 @@ static int synaptics_ts_resume(struct i2c_client *client)
 		}
 	}
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
-        if ((s2w_switch == 2 || s2w_switch == 0) && dt2w_switch == 0 && gestures_switch == 0) {
+        if ((s2w_switch == 2 || s2w_switch == 0) && !dt2w_switch && !su2w_switch && !gestures_switch) {
 #endif
 	if (ts->use_irq) {
 		enable_irq(client->irq);
