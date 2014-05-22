@@ -568,11 +568,9 @@ all: vmlinux
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os -falign-functions -falign-jumps -falign-loops -falign-labels -freorder-blocks
 else
-#KBUILD_CFLAGS	+= -O2 -fno-reorder-blocks-and-partition
-KBUILD_CFLAGS	+= -O2 -marm -mtune=cortex-a15 -mcpu=cortex-a15 -mfpu=neon-vfpv4 -ffast-math \
-			-fgraphite -mvectorize-with-neon-quad -fgcse-sm -fivopts -fvect-cost-model=unlimited \
-			-ftree-partial-pre -funswitch-loops -fpredictive-commoning -fgcse-after-reload -ftree-vectorize \
-			-fira-loop-pressure
+KBUILD_CFLAGS	+= -O3 -marm -mtune=cortex-a15 -mcpu=cortex-a15 -mfpu=neon-vfpv4 -ffast-math \
+			-fgraphite-identity -mvectorize-with-neon-quad -fgcse-sm -fivopts -ftree-vectorize -fira-loop-pressure \
+			-Wno-error=unused-parameter -Wno-error=unused-but-set-variable -Wno-error=maybe-uninitialized
 endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
