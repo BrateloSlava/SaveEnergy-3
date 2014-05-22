@@ -148,8 +148,8 @@
 		rpm-regulator-smpa1 {
 			status = "okay";
 			pm8941_s1: regulator-s1 {
-				regulator-min-microvolt = <1300000>;
-				regulator-max-microvolt = <1300000>;
+				regulator-min-microvolt = <1225000>;
+				regulator-max-microvolt = <1350000>;
 				qcom,init-voltage = <1300000>;
 				qcom,init-current = <100>;
 				qcom,system-load = <100000>;
