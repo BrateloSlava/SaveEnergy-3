@@ -195,7 +195,7 @@ export KBUILD_BUILDHOST := $(SUBARCH)
 ARCH		?= $(SUBARCH)
 CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
 ARCH		:= arm
-CROSS_COMPILE	:= arm-gnueabi-
+CROSS_COMPILE	:= arm-eabi-
 
 # Architecture as present in compile.h
 UTS_MACHINE 	:= $(ARCH)
@@ -358,7 +358,6 @@ CFLAGS_MODULE   = -Os
 FLAGS_MODULE   =
 LDFLAGS_MODULE  = 
 CFLAGS_KERNEL	= -mcpu=cortex-a15 -mtune=cortex-a15 -fgraphite-identity
-# -mtls-dialect=gnu2 -fgraphite-identity
 AFLAGS_KERNEL	= 
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
@@ -569,7 +568,8 @@ ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os -falign-functions -falign-jumps -falign-loops -falign-labels -freorder-blocks
 else
 KBUILD_CFLAGS	+= -O3 -marm -mtune=cortex-a15 -mcpu=cortex-a15 -mfpu=neon-vfpv4 -ffast-math \
-			-fgraphite-identity -mvectorize-with-neon-quad -fgcse-sm -fivopts -ftree-vectorize -fira-loop-pressure \
+			-mvectorize-with-neon-quad -fgcse-sm -fivopts -ftree-vectorize -fira-loop-pressure \
+			-fgraphite-identity -floop-interchange -floop-strip-mine -floop-block \
 			-Wno-error=unused-parameter -Wno-error=unused-but-set-variable -Wno-error=maybe-uninitialized
 endif
 
