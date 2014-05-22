@@ -65,14 +65,15 @@ static spinlock_t speedchange_cpumask_lock;
 static struct mutex gov_lock;
 
 /* Hi speed to bump to from lo speed when load burst (default max) */
-static unsigned int hispeed_freq;
+static unsigned int hispeed_freq=918000; //K2U/K2UL adaptation
 
 /* Go to hi speed when CPU load at or above this value. */
 #define DEFAULT_GO_HISPEED_LOAD 99
-static unsigned long go_hispeed_load = DEFAULT_GO_HISPEED_LOAD;
+// static unsigned long go_hispeed_load = DEFAULT_GO_HISPEED_LOAD;
+static unsigned long go_hispeed_load = 90; //K2U/K2UL adaptation
 
 /* Sampling down factor to be applied to min_sample_time at max freq */
-static unsigned int sampling_down_factor;
+static unsigned int sampling_down_factor=4; //K2U/K2UL adaptation
 
 /* Target load.  Lower values result in higher CPU speeds. */
 #define DEFAULT_TARGET_LOAD 90
@@ -85,13 +86,15 @@ static int ntarget_loads = ARRAY_SIZE(default_target_loads);
  * The minimum amount of time to spend at a frequency before we can ramp down.
  */
 #define DEFAULT_MIN_SAMPLE_TIME (80 * USEC_PER_MSEC)
-static unsigned long min_sample_time = DEFAULT_MIN_SAMPLE_TIME;
+//static unsigned long min_sample_time = DEFAULT_MIN_SAMPLE_TIME;
+static unsigned long min_sample_time = 40000; //K2U/K2UL adaptation
 
 /*
  * The sample rate of the timer used to increase frequency
  */
 #define DEFAULT_TIMER_RATE (20 * USEC_PER_MSEC)
-static unsigned long timer_rate = DEFAULT_TIMER_RATE;
+//static unsigned long timer_rate = DEFAULT_TIMER_RATE;
+static unsigned long timer_rate = 30000; //K2U/K2UL adaptation
 
 /* Busy SDF parameters*/
 #define MIN_BUSY_TIME (100 * USEC_PER_MSEC)
@@ -110,7 +113,8 @@ static int nabove_hispeed_delay = ARRAY_SIZE(default_above_hispeed_delay);
 /* Non-zero means indefinite speed boost active */
 static int boost_val;
 /* Duration of a boot pulse in usecs */
-static int boostpulse_duration_val = DEFAULT_MIN_SAMPLE_TIME;
+// static int boostpulse_duration_val = DEFAULT_MIN_SAMPLE_TIME;
+static int boostpulse_duration_val = 50000; //K2U/K2UL adaptation
 /* End time of boost pulse in ktime converted to usecs */
 static u64 boostpulse_endtime;
 
@@ -119,7 +123,8 @@ static u64 boostpulse_endtime;
  * minimum before wakeup to reduce speed, or -1 if unnecessary.
  */
 #define DEFAULT_TIMER_SLACK (4 * DEFAULT_TIMER_RATE)
-static int timer_slack_val = DEFAULT_TIMER_SLACK;
+//static int timer_slack_val = DEFAULT_TIMER_SLACK;
+static int timer_slack_val = 70000; //K2U/K2UL adaptation
 
 static bool io_is_busy;
 
@@ -129,9 +134,9 @@ static bool io_is_busy;
  * up_threshold_any_cpu_freq then do not let the frequency to drop below
  * sync_freq
  */
-static unsigned int up_threshold_any_cpu_load;
-static unsigned int sync_freq;
-static unsigned int up_threshold_any_cpu_freq;
+static unsigned int up_threshold_any_cpu_load=70; //K2U/K2UL adaptation
+static unsigned int sync_freq=594000; //K2U/K2UL adaptation
+static unsigned int up_threshold_any_cpu_freq=702000; //K2U/K2UL adaptation
 
 static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 		unsigned int event);
