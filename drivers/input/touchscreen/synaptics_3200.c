@@ -180,6 +180,9 @@ static DEFINE_MUTEX(pwrkeyworklock);
 static int wakesleep_vib = 0;
 static int vib_strength = 30;
 
+static int last_touch_position_x = 0;
+static int last_touch_position_y = 0;
+
 extern uint8_t touchscreen_is_on(void) {
 	if (scr_suspended == false) {
 		return 1;
@@ -2219,12 +2222,15 @@ static int synaptics_init_panel(struct synaptics_ts_data *ts)
 }
 
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
-static void dt2w_func(cputime64_t trigger_time) {
+static void dt2w_func(cputime64_t trigger_time, int x, int y) {
 
         dt2w_time[1] = dt2w_time[0];
         dt2w_time[0] = trigger_time;
 
 	pr_debug(KERN_INFO"[DT2W]: inside the function\n");
+
+	if (y < 1740 || (x > 0 && x < 400) || x > 600 )
+		return;
 
 	if (((dt2w_time[0]-dt2w_time[1]) > DT2W_TIMEOUT_MIN) && ((dt2w_time[0]-dt2w_time[1]) < DT2W_TIMEOUT_MAX)) {
                pr_debug(KERN_INFO"[DT2W]: OFF->ON\n");
@@ -2403,11 +2409,10 @@ static void synaptics_ts_finger_func(struct synaptics_ts_data *ts)
 
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
 				//dt2w
-				if ((((ts->finger_count > 0)?1:0) == 0) && (scr_suspended == true) && (dt2w_switch == 1) &&
-						(finger_data[0][1] > 1400)) { 
+				if ((((ts->finger_count > 0)?1:0) == 0) && (scr_suspended == true) && (dt2w_switch == 1)) { 
 					dt_trigger_time = ktime_to_ms(ktime_get());
-					pr_debug(KERN_INFO "[dt2wake]: %d=> Y:%d\n", i + 1,  finger_data[0][1]);
-					dt2w_func(dt_trigger_time);
+					pr_debug(KERN_INFO "[dt2wake]: %d=> Y:%d X:%d\n", i + 1,  finger_data[0][1],  finger_data[0][0]);
+					dt2w_func(dt_trigger_time, last_touch_position_x, last_touch_position_y);
 				}
 
 				/* if finger released, reset count & barriers */
@@ -2510,7 +2515,7 @@ static void synaptics_ts_finger_func(struct synaptics_ts_data *ts)
 						if (ts->block_touch_event == 0) {
 							if (ts->htc_event == SYN_AND_REPORT_TYPE_A) {
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
-        							if (scr_suspended == true && finger_data[i][1] < 1780) {
+        							if (scr_suspended == true && finger_data[i][1] < 1740) {
         								finger_data[i][0] = -10;
         								finger_data[i][1] = -10;
         							}
@@ -2540,7 +2545,10 @@ static void synaptics_ts_finger_func(struct synaptics_ts_data *ts)
 								input_mt_sync(ts->input_dev);
 							} else if (ts->htc_event == SYN_AND_REPORT_TYPE_B) {
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
-        							if (scr_suspended == true && finger_data[i][1] < 1780) {
+								last_touch_position_x = finger_data[i][0];
+								last_touch_position_y = finger_data[i][1];
+
+        							if (scr_suspended == true && finger_data[i][1] < 1740) {
         								finger_data[i][0] = -10;
         								finger_data[i][1] = -10;
         							}
