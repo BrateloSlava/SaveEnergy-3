@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2009-2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -40,6 +40,7 @@
 #define REG_LPA(off)	(MSM_LPASS_CLK_CTL_BASE + (off))
 #define REG_GCC(off)	(MSM_APCS_GCC_BASE + (off))
 
+/* Peripheral clock registers. */
 #define ADM0_PBUS_CLK_CTL_REG			REG(0x2208)
 #define SFAB_SATA_S_HCLK_CTL_REG		REG(0x2480)
 #define CE1_HCLK_CTL_REG			REG(0x2720)
@@ -55,6 +56,7 @@
 #define CLK_HALT_CFPB_STATEB_REG		REG(0x2FD0)
 #define CLK_HALT_CFPB_STATEC_REG		REG(0x2FD4)
 #define CLK_HALT_DFAB_STATE_REG			REG(0x2FC8)
+/* 8064 name CLK_HALT_GSS_KPSS_MISC_STATE_REG */
 #define CLK_HALT_MSS_SMPSS_MISC_STATE_REG	REG(0x2FDC)
 #define CLK_HALT_SFPB_MISC_STATE_REG		REG(0x2FD8)
 #define CLK_HALT_AFAB_SFAB_STATEB_REG		REG(0x2FC4)
@@ -68,6 +70,7 @@
 #define GSBIn_UART_APPS_MD_REG(n)		REG(0x29D0+(0x20*((n)-1)))
 #define GSBIn_UART_APPS_NS_REG(n)		REG(0x29D4+(0x20*((n)-1)))
 #define PDM_CLK_NS_REG				REG(0x2CC0)
+/* 8064 name BB_PLL_ENA_APCS_REG */
 #define BB_PLL_ENA_SC0_REG			REG(0x34C0)
 #define BB_PLL_ENA_RPM_REG			REG(0x34A0)
 #define BB_PLL0_STATUS_REG			REG(0x30D8)
@@ -154,6 +157,7 @@
 #define GPLL1_STATUS_REG			REG(0x3178)
 #define PXO_SRC_CLK_CTL_REG			REG(0x2EA0)
 
+/* Multimedia clock registers. */
 #define AHB_EN_REG				REG_MM(0x0008)
 #define AHB_EN2_REG				REG_MM(0x0038)
 #define AHB_EN3_REG				REG_MM(0x0248)
@@ -190,7 +194,7 @@
 #define DSI2_ESC_CC_REG				REG_MM(0x013C)
 #define DSI_PIXEL_CC_REG			REG_MM(0x0130)
 #define DSI2_PIXEL_CC_REG			REG_MM(0x0094)
-#define DSI2_PIXEL_CC2_REG          REG_MM(0x0264)
+#define DSI2_PIXEL_CC2_REG			REG_MM(0x0264)
 #define DBG_BUS_VEC_A_REG			REG_MM(0x01C8)
 #define DBG_BUS_VEC_B_REG			REG_MM(0x01CC)
 #define DBG_BUS_VEC_C_REG			REG_MM(0x01D0)
@@ -275,6 +279,7 @@
 #define VPE_CC_REG				REG_MM(0x0110)
 #define VPE_NS_REG				REG_MM(0x0118)
 
+/* Low-power Audio clock registers. */
 #define LCC_CLK_HS_DEBUG_CFG_REG		REG_LPA(0x00A4)
 #define LCC_CLK_LS_DEBUG_CFG_REG		REG_LPA(0x00A8)
 #define LCC_CODEC_I2S_MIC_MD_REG		REG_LPA(0x0064)
@@ -309,6 +314,7 @@
 
 #define GCC_APCS_CLK_DIAG			REG_GCC(0x001C)
 
+/* MUX source input identifiers. */
 #define pxo_to_bb_mux		0
 #define cxo_to_bb_mux		5
 #define pll0_to_bb_mux		2
@@ -318,12 +324,12 @@
 #define pll3_to_bb_mux		6
 #define pxo_to_mm_mux		0
 #define pll1_to_mm_mux		1
-#define pll2_to_mm_mux		1	
-#define pll8_to_mm_mux		2	
+#define pll2_to_mm_mux		1	/* or MMCC_PLL1 */
+#define pll8_to_mm_mux		2	/* or GCC_PERF */
 #define pll0_to_mm_mux		3
-#define pll15_to_mm_mux		3	
+#define pll15_to_mm_mux		3	/* or MM_PLL3 */
 #define gnd_to_mm_mux		4
-#define pll3_to_mm_mux		3	
+#define pll3_to_mm_mux		3	/* or MMCC_PLL2 */
 #define hdmi_pll_to_mm_mux	3
 #define cxo_to_xo_mux		0
 #define pxo_to_xo_mux		1
@@ -335,6 +341,7 @@
 #define pxo_to_pcie_mux		0
 #define pll3_to_pcie_mux	1
 
+/* Test Vector Macros */
 #define TEST_TYPE_PER_LS	1
 #define TEST_TYPE_PER_HS	2
 #define TEST_TYPE_MM_LS		3
@@ -476,6 +483,9 @@ static int set_vdd_sr2_hdmi_pll_8930(struct clk_vdd_class *vdd_class, int level)
 				    sr2_lreg_uv[level], sr2_lreg_uv[level], 1);
 }
 
+/*
+ * Clock Descriptions
+ */
 
 DEFINE_CLK_RPM_BRANCH(pxo_clk, pxo_a_clk, PXO, 27000000);
 DEFINE_CLK_RPM_BRANCH(cxo_clk, cxo_a_clk, CXO, 19200000);
@@ -563,6 +573,7 @@ static struct pll_clk pll15_clk = {
 	},
 };
 
+/* AXI Interfaces */
 static struct branch_clk gmem_axi_clk = {
 	.b = {
 		.ctl_reg = MAXI_EN_REG,
@@ -784,6 +795,7 @@ static struct branch_clk vcap_axi_clk = {
 	},
 };
 
+/* gfx3d_axi_clk is set as a dependency of gmem_axi_clk at runtime */
 static struct branch_clk gfx3d_axi_clk = {
 	.b = {
 		.ctl_reg = MAXI_EN5_REG,
@@ -818,6 +830,7 @@ static struct branch_clk gfx3d_axi_clk_8930 = {
 	},
 };
 
+/* AHB Interfaces */
 static struct branch_clk amp_p_clk = {
 	.b = {
 		.ctl_reg = AHB_EN_REG,
@@ -1194,6 +1207,9 @@ static struct branch_clk vcap_p_clk = {
 	},
 };
 
+/*
+ * Peripheral Clocks
+ */
 #define CLK_GP(i, n, h_r, h_b) \
 	struct rcg_clk i##_clk = { \
 		.b = { \
@@ -1841,6 +1857,7 @@ static struct branch_clk usb_fs2_sys_clk = {
 	},
 };
 
+/* Fast Peripheral Bus Clocks */
 static struct branch_clk ce1_core_clk = {
 	.b = {
 		.ctl_reg = CE1_CORE_CLK_CTL_REG,
@@ -2509,6 +2526,7 @@ static struct branch_clk sdc5_p_clk = {
 	},
 };
 
+/* HW-Voteable Clocks */
 static struct branch_clk adm0_clk = {
 	.b = {
 		.ctl_reg = SC0_U_CLK_BRANCH_ENA_VOTE_REG,
@@ -2603,6 +2621,9 @@ static struct branch_clk rpm_msg_ram_p_clk = {
 	},
 };
 
+/*
+ * Multimedia Clocks
+ */
 
 #define CLK_CAM(name, n, hb) \
 	struct rcg_clk name = { \
@@ -2893,12 +2914,20 @@ static int pix_rdi_clk_set_rate(struct clk *c, unsigned long rate)
 	reg &= ~rdi->s2_mask;
 	reg |= rate == 2 ? rdi->s2_mask : 0;
 	writel_relaxed(reg, rdi->s2_reg);
+	/*
+	 * Wait at least 6 cycles of slowest clock
+	 * for the glitch-free MUX to fully switch sources.
+	 */
 	mb();
 	udelay(1);
 	reg = readl_relaxed(rdi->s_reg);
 	reg &= ~rdi->s_mask;
 	reg |= rate == 1 ? rdi->s_mask : 0;
 	writel_relaxed(reg, rdi->s_reg);
+	/*
+	 * Wait at least 6 cycles of slowest clock
+	 * for the glitch-free MUX to fully switch sources.
+	 */
 	mb();
 	udelay(1);
 	rdi->cur_rate = rate;
@@ -3167,6 +3196,11 @@ static struct branch_clk csi2phy_timer_clk = {
 		.freq_hz = d, \
 		.ns_val = BVAL(15, 12, (d-1)), \
 	}
+/*
+ * The DSI_BYTE/ESC clock is sourced from the DSI PHY PLL, which may change rate
+ * without this clock driver knowing.  So, overload the clk_set_rate() to set
+ * the divider (1 to 16) of the clock with respect to the PLL rate.
+ */
 static struct clk_freq_tbl clk_tbl_dsi_byte[] = {
 	F_DSI(1),  F_DSI(2),  F_DSI(3),  F_DSI(4),
 	F_DSI(5),  F_DSI(6),  F_DSI(7),  F_DSI(8),
@@ -3272,7 +3306,6 @@ static struct rcg_clk dsi2_esc_clk = {
 		.ns_val = NS_MND_BANKED4(20, 16, n, m, 3, 0, s##_to_mm_mux), \
 		.ctl_val = CC_BANKED(9, 6, n), \
 	}
-
 static struct clk_freq_tbl clk_tbl_gfx2d[] = {
 	F_GFX2D(        0, gnd,  0,  0),
 	F_GFX2D( 27000000, pxo,  0,  0),
@@ -3285,12 +3318,12 @@ static struct clk_freq_tbl clk_tbl_gfx2d[] = {
 	F_GFX2D(145455000, pll2, 2, 11),
 	F_GFX2D(160000000, pll2, 1,  5),
 	F_GFX2D(177778000, pll2, 2,  9),
-#ifdef CONFIG_GPU_OVERCLOCK
-	F_GFX2D(216000000, pll2, 1,  4),
-#else
 	F_GFX2D(200000000, pll2, 1,  4),
+#ifdef CONFIG_GPU_OVERCLOCK
+	F_GFX2D(266667000, pll2, 1,  3),
+	F_GFX2D(300000000, pll2, 3,  8),
+	F_GFX2D(320000000, pll2, 2,  5),
 #endif
-	F_GFX2D(228571000, pll2, 2,  7),
 	F_END
 };
 
@@ -3333,8 +3366,13 @@ static struct rcg_clk gfx2d0_clk = {
 		.dbg_name = "gfx2d0_clk",
 		.ops = &clk_ops_rcg,
 		.flags = CLKFLAG_SKIP_HANDOFF,
+#ifdef CONFIG_GPU_OVERCLOCK
 		VDD_DIG_FMAX_MAP3(LOW,  100000000, NOMINAL, 200000000,
-				  HIGH, 228571000),
+				  HIGH, 320000000),
+#else
+		VDD_DIG_FMAX_MAP3(LOW,  100000000, NOMINAL, 200000000,
+				  HIGH, 200000000),
+#endif
 		CLK_INIT(gfx2d0_clk.c),
 	},
 };
@@ -3378,8 +3416,13 @@ static struct rcg_clk gfx2d1_clk = {
 		.dbg_name = "gfx2d1_clk",
 		.ops = &clk_ops_rcg,
 		.flags = CLKFLAG_SKIP_HANDOFF,
+#ifdef CONFIG_GPU_OVERCLOCK
 		VDD_DIG_FMAX_MAP3(LOW,  100000000, NOMINAL, 200000000,
-				  HIGH, 228571000),
+				  HIGH, 320000000),
+#else
+		VDD_DIG_FMAX_MAP3(LOW,  100000000, NOMINAL, 200000000,
+				  HIGH, 200000000),
+#endif
 		CLK_INIT(gfx2d1_clk.c),
 	},
 };
@@ -3393,6 +3436,7 @@ static struct rcg_clk gfx2d1_clk = {
 		.ctl_val = CC_BANKED(9, 6, n), \
 	}
 
+/*Shared by 8064, 8930, and 8960ab*/
 static struct clk_freq_tbl clk_tbl_gfx3d[] = {
 	F_GFX3D(        0, gnd,   0,  0),
 	F_GFX3D( 27000000, pxo,   0,  0),
@@ -3411,9 +3455,11 @@ static struct clk_freq_tbl clk_tbl_gfx3d[] = {
 	F_GFX3D(266667000, pll2,  1,  3),
 	F_GFX3D(320000000, pll2,  2,  5),
 	F_GFX3D(400000000, pll2,  1,  2),
-	F_GFX3D(450000000, pll15, 1,  2),
-#ifdef CONFIG_GPU_MAX_OVERCLOCK
-	F_GFX3D(487500000, pll15, 1,  2),
+
+#ifdef CONFIG_GPU_OVERCLOCK
+	F_GFX3D(436364000, pll2, 6, 11),
+	F_GFX3D(480000000, pll3, 1,  4),
+	F_GFX3D(533333000, pll2,  2,  3),
 #endif
 	F_END
 };
@@ -3436,9 +3482,6 @@ static struct clk_freq_tbl clk_tbl_gfx3d_8960[] = {
 	F_GFX3D(300000000, pll3,  1,  4),
 	F_GFX3D(320000000, pll2,  2,  5),
 	F_GFX3D(400000000, pll2,  1,  2),
-#ifdef CONFIG_GPU_OVERCLOCK
-	F_GFX3D(450000000, pll15, 1,  2),
-#endif
 	F_END
 };
 
@@ -3457,10 +3500,10 @@ static unsigned long fmax_gfx3d_8064[MAX_VDD_LEVELS] __initdata = {
 static unsigned long fmax_gfx3d_8930[MAX_VDD_LEVELS] __initdata = {
 	[VDD_DIG_LOW]     = 160000000,
 	[VDD_DIG_NOMINAL] = 320000000,
-#ifdef CONFIG_GPU_MAX_OVERCLOCK
-	[VDD_DIG_HIGH]    = 487500000
+#ifdef CONFIG_GPU_OVERCLOCK
+	[VDD_DIG_HIGH]    = 533333000
 #else
-	[VDD_DIG_HIGH]    = 450000000
+	[VDD_DIG_HIGH]    = 400000000
 #endif
 };
 
@@ -3504,7 +3547,7 @@ static struct rcg_clk gfx3d_clk = {
 		.ops = &clk_ops_rcg,
 		VDD_DIG_FMAX_MAP3(LOW,  128000000, NOMINAL, 300000000,
 #ifdef CONFIG_GPU_MAX_OVERCLOCK
-				  HIGH, 408000000),
+				  HIGH, 533333000),
 #else
 				  HIGH, 400000000),
 #endif
@@ -3530,11 +3573,7 @@ static struct clk_freq_tbl clk_tbl_vcap[] = {
 	F_VCAP( 76800000, pll8, 1,  5),
 	F_VCAP(128000000, pll8, 1,  3),
 	F_VCAP(160000000, pll2, 1,  5),
-#ifdef CONFIG_GPU_MAX_OVERCLOCK
-	F_VCAP(202000000, pll2, 1,  4),
-#else
 	F_VCAP(200000000, pll2, 1,  4),
-#endif
 	F_END
 };
 
