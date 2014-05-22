@@ -34,12 +34,6 @@ DEFINE_EVENT(set, cpufreq_interactive_setspeed,
 	TP_ARGS(cpu_id, targfreq, actualfreq)
 );
 
-DEFINE_EVENT(set, cpufreq_interactive_idle_start,
-	TP_PROTO(u32 cpu_id, unsigned long targfreq,
-	     unsigned long actualfreq),
-	TP_ARGS(cpu_id, targfreq, actualfreq)
-);
-
 DECLARE_EVENT_CLASS(loadeval,
 	    TP_PROTO(unsigned long cpu_id, unsigned long load,
 		     unsigned long curtarg, unsigned long curactual,
@@ -112,6 +106,7 @@ TRACE_EVENT(cpufreq_interactive_unboost,
 	    TP_printk("%s", __get_str(s))
 );
 
-#endif 
+#endif /* _TRACE_CPUFREQ_INTERACTIVE_H */
 
+/* This part must be outside protection */
 #include <trace/define_trace.h>

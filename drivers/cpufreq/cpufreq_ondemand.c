@@ -35,13 +35,12 @@
 static int old_up_threshold;
 static int g_count = 0;
 
-#if defined(CONFIG_CPU_MAX_OVERCLOCK)
+#ifdef CONFIG_CPU_OVERCLOCK
 #define MAX_CPU_ONDEMAND_FREQ	1674000
-#elif defined(CONFIG_CPU_OVERCLOCK) && !defined(CONFIG_CPU_MAX_OVERCLOCK)
-#define MAX_CPU_ONDEMAND_FREQ	1458000 
 #else
 #define MAX_CPU_ONDEMAND_FREQ	1188000 
 #endif
+
 
 #define TWO_PHASE_FREQ		918000
 #define INPUT_EVENT_FREQ	810000
