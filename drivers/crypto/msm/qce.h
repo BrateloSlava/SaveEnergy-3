@@ -145,4 +145,4 @@ int qce_ablk_cipher_req(void *handle, struct qce_req *req);
 int qce_hw_support(void *handle, struct ce_hw_support *support);
 int qce_process_sha_req(void *handle, struct qce_sha_req *s_req);
 
-#endif 
+#endif
