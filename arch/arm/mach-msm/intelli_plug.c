@@ -23,12 +23,13 @@
 #include <linux/slab.h>
 #include <linux/input.h>
 #include <linux/synaptics_i2c_rmi.h>
+#include <linux/cpufreq.h>
 
 //#define DEBUG_INTELLI_PLUG
 #undef DEBUG_INTELLI_PLUG
 
 #define INTELLI_PLUG_MAJOR_VERSION	2
-#define INTELLI_PLUG_MINOR_VERSION	3
+#define INTELLI_PLUG_MINOR_VERSION	4
 
 #define DEF_SAMPLING_MS			(500)
 #define BUSY_SAMPLING_MS		(250)
@@ -41,7 +42,6 @@
 #endif
 
 #define BUSY_PERSISTENCE		20
-
 
 #define CPU_DOWN_FACTOR			2
 
@@ -400,6 +400,23 @@ static void intelli_plug_early_suspend(struct early_suspend *handler)
 	}
 }
 
+static void wakeup_boost(void)
+{
+	unsigned int i, ret;
+	struct cpufreq_policy policy;
+
+	for_each_online_cpu(i) {
+
+		ret = cpufreq_get_policy(&policy, i);
+		if (ret)
+			continue;
+
+		policy.cur = policy.max;
+
+		cpufreq_update_policy(i);
+	}
+}
+
 static void __cpuinit intelli_plug_late_resume(struct early_suspend *handler)
 {
 	int num_of_active_cores;
@@ -424,6 +441,8 @@ static void __cpuinit intelli_plug_late_resume(struct early_suspend *handler)
 		cpu_up(i);
 	}
 
+	wakeup_boost();
+
 	queue_delayed_work_on(0, intelliplug_wq, &intelli_plug_work,
 		msecs_to_jiffies(10));
 }
@@ -441,7 +460,6 @@ static void intelli_plug_input_event(struct input_handle *handle,
 #ifdef DEBUG_INTELLI_PLUG
 	pr_info("intelli_plug touched!\n");
 #endif
-
 	queue_delayed_work_on(0, intelliplug_wq, &intelli_plug_boost,
 		msecs_to_jiffies(10));
 }
@@ -520,6 +538,10 @@ int __init intelli_plug_init(void)
 		 INTELLI_PLUG_MINOR_VERSION);
 
 	rc = input_register_handler(&intelli_plug_input_handler);
+#ifdef CONFIG_HAS_EARLYSUSPEND
+	register_early_suspend(&intelli_plug_early_suspend_struct_driver);
+#endif
+
 	intelliplug_wq = alloc_workqueue("intelliplug",
 				WQ_HIGHPRI | WQ_UNBOUND, 1);
 	intelliplug_boost_wq = alloc_workqueue("iplug_boost",
@@ -529,9 +551,6 @@ int __init intelli_plug_init(void)
 	queue_delayed_work_on(0, intelliplug_wq, &intelli_plug_work,
 		msecs_to_jiffies(10));
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-	register_early_suspend(&intelli_plug_early_suspend_struct_driver);
-#endif
 	return 0;
 }
 
