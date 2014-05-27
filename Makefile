@@ -370,7 +370,6 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
 KBUILD_CPPFLAGS := -D__KERNEL__
 
 KBUILD_CFLAGS   := -Wall -DNDEBUG -Wundef -Wstrict-prototypes -Wno-trigraphs \
-		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
 		   -fno-delete-null-pointer-checks \
@@ -571,7 +570,8 @@ else
 KBUILD_CFLAGS	+= -O3 -marm -mtune=cortex-a15 -mcpu=cortex-a15 -mfpu=neon-vfpv4 -ffast-math \
 			-mvectorize-with-neon-quad -fgcse-sm -fivopts -ftree-vectorize -fira-loop-pressure \
 			-fgraphite-identity -floop-interchange -floop-strip-mine -floop-block \
-			-Wno-error=unused-parameter -Wno-error=unused-but-set-variable -Wno-error=maybe-uninitialized
+			-Wno-error=unused-parameter -Wno-error=unused-but-set-variable -Wno-error=maybe-uninitialized \
+			-fweb -ftracer -ffunction-sections -fdata-sections
 endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
@@ -670,7 +670,8 @@ endif
 
 # Use --build-id when available.
 LDFLAGS_BUILD_ID = $(patsubst -Wl$(comma)%,%,\
-			      $(call cc-ldoption, -Wl$(comma)--build-id,))
+				$(call cc-ldoption, -Wl$(comma)--build-id,-O1,--as-needed,--relax,--sort-common,--gc-sections,))
+
 KBUILD_LDFLAGS_MODULE += $(LDFLAGS_BUILD_ID)
 LDFLAGS_vmlinux += $(LDFLAGS_BUILD_ID)
 
