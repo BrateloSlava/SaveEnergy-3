@@ -247,7 +247,7 @@ static int get_ctl_value_v1(struct usb_mixer_elem_info *cval, int request, int v
 	unsigned char buf[2];
 	int val_len = cval->val_type >= USB_MIXER_S16 ? 2 : 1;
 	int timeout = 10;
-	int err;
+	int err=0;
 
 	err = snd_usb_autoresume(cval->mixer->chip);
 	if (err < 0)
@@ -273,7 +273,7 @@ static int get_ctl_value_v2(struct usb_mixer_elem_info *cval, int request, int v
 	struct snd_usb_audio *chip = cval->mixer->chip;
 	unsigned char buf[2 + 3*sizeof(__u16)]; 
 	unsigned char *val;
-	int ret, size;
+	int ret=0, size=0;
 	__u8 bRequest;
 
 	if (request == UAC_GET_CUR) {
@@ -348,7 +348,7 @@ static inline int get_cur_mix_raw(struct usb_mixer_elem_info *cval,
 static int get_cur_mix_value(struct usb_mixer_elem_info *cval,
 			     int channel, int index, int *value)
 {
-	int err;
+	int err=0;
 
 	if (cval->cached & (1 << channel)) {
 		*value = cval->cache_val[index];
@@ -373,7 +373,7 @@ int snd_usb_mixer_set_ctl_value(struct usb_mixer_elem_info *cval,
 {
 	struct snd_usb_audio *chip = cval->mixer->chip;
 	unsigned char buf[2];
-	int val_len, err, timeout = 10;
+	int val_len=0, err=0, timeout = 10;
 
 	if (cval->mixer->protocol == UAC_VERSION_1) {
 		val_len = cval->val_type >= USB_MIXER_S16 ? 2 : 1;
@@ -419,7 +419,7 @@ static int set_cur_ctl_value(struct usb_mixer_elem_info *cval, int validx, int v
 static int set_cur_mix_value(struct usb_mixer_elem_info *cval, int channel,
 			     int index, int value)
 {
-	int err;
+	int err=0;
 	unsigned int read_only = (channel == 0) ?
 		cval->master_readonly :
 		cval->ch_readonly & (1 << (channel - 1));
@@ -470,7 +470,7 @@ int snd_usb_mixer_add_control(struct usb_mixer_interface *mixer,
 			      struct snd_kcontrol *kctl)
 {
 	struct usb_mixer_elem_info *cval = kctl->private_data;
-	int err;
+	int err=0;
 
 	while (snd_ctl_find_id(mixer->chip->card, &kctl->id))
 		kctl->id.index++;
@@ -577,7 +577,7 @@ static int get_term_name(struct mixer_build *state, struct usb_audio_term *iterm
 
 static int check_input_term(struct mixer_build *state, int id, struct usb_audio_term *term)
 {
-	int err;
+	int err=0;
 	void *p1;
 
 	memset(term, 0, sizeof(*term));
@@ -1174,7 +1174,7 @@ static void build_mixer_unit_ctl(struct mixer_build *state,
 {
 	struct usb_mixer_elem_info *cval;
 	unsigned int num_outs = uac_mixer_unit_bNrChannels(desc);
-	unsigned int i, len;
+	unsigned int i=0, len=0;
 	struct snd_kcontrol *kctl;
 	const struct usbmix_name_map *map;
 
@@ -1225,8 +1225,8 @@ static int parse_audio_mixer_unit(struct mixer_build *state, int unitid, void *r
 {
 	struct uac_mixer_unit_descriptor *desc = raw_desc;
 	struct usb_audio_term iterm;
-	int input_pins, num_ins, num_outs;
-	int pin, ich, err;
+	int input_pins=0, num_ins=0, num_outs=0;
+	int pin=0, ich=0, err=0;
 
 	if (desc->bLength < 11 || ! (input_pins = desc->bNrInPins) || ! (num_outs = uac_mixer_unit_bNrChannels(desc))) {
 		snd_printk(KERN_ERR "invalid MIXER UNIT descriptor %d\n", unitid);
@@ -1271,7 +1271,7 @@ static int parse_audio_mixer_unit(struct mixer_build *state, int unitid, void *r
 static int mixer_ctl_procunit_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
 {
 	struct usb_mixer_elem_info *cval = kcontrol->private_data;
-	int err, val=0;
+	int err=0, val=0;
 
 	err = get_cur_ctl_value(cval, cval->control << 8, &val);
 	if (err < 0 && cval->mixer->ignore_ctl_error) {
@@ -1288,7 +1288,7 @@ static int mixer_ctl_procunit_get(struct snd_kcontrol *kcontrol, struct snd_ctl_
 static int mixer_ctl_procunit_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
 {
 	struct usb_mixer_elem_info *cval = kcontrol->private_data;
-	int val, oval, err;
+	int val=0, oval=0, err=0;
 
 	err = get_cur_ctl_value(cval, cval->control << 8, &oval);
 	if (err < 0) {

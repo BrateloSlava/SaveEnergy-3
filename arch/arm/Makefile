@@ -57,12 +57,19 @@ comma = ,
 # Note that GCC does not numerically define an architecture version
 # macro, but instead defines a whole series of macros which makes
 # testing for a specific architecture or later rather impossible.
-CUSTOM_FLAG	= -marm -mtune=cortex-a15 -mcpu=cortex-a15 -mfpu=neon-vfpv4 \
+ALL_FLAG   := -DNDEBUG -Wno-trigraphs \
+		-fno-strict-aliasing -fno-common \
+		-Wno-format-security \
+		-fno-delete-null-pointer-checks \
+		-Wno-sizeof-pointer-memaccess \
+		-fmodulo-sched -fmodulo-sched-allow-regmoves
+
+CUSTOM_FLAG	:= -marm -mtune=cortex-a15 -mcpu=cortex-a15 -mfpu=neon-vfpv4 -ffast-math \
 			-fgcse-sm -fivopts -ftree-partial-pre -funswitch-loops -fpredictive-commoning -fgcse-after-reload -ftree-vectorize -fira-loop-pressure \
 			-ftree-loop-im -ftree-loop-ivcanon -fsection-anchors \
 			-fgraphite-identity -floop-interchange -floop-strip-mine -floop-block
 # -floop-parallelize-all
-#			-flto -fno-toplevel-reorder -fuse-linker-plugin \
+#			-flto -fno-toplevel-reorder -fuse-linker-plugin
 
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 CUSTOM_FLAG	+= -Os
@@ -99,7 +106,8 @@ arch-$(CONFIG_CPU_32v3)	=-D__LINUX_ARM_ARCH__=3 -march=armv3
 # keep things simpler, we don't bother with a fallback option if the compiler
 # doesn't even support -march=armv7-a, since in that situation we would have
 # bigger problems.
-arch-$(CONFIG_ARCH_MSM_KRAIT)	:=-D__LINUX_ARM_ARCH__=7 $(call cc-option, $(CUSTOM_FLAG),-march=armv7-a)
+#arch-$(CONFIG_ARCH_MSM_KRAIT)	:=-D__LINUX_ARM_ARCH__=7 $(call cc-option, $(ALL_FLAG) $(CUSTOM_FLAG),-march=armv7-a)
+arch-$(CONFIG_ARCH_MSM_KRAIT)	:=-D__LINUX_ARM_ARCH__=7 $(call cc-option, $(ALL_FLAG) $(CUSTOM_FLAG))
 
 # This selects how we optimise for the processor.
 tune-$(CONFIG_CPU_ARM610)	=-mtune=arm610
