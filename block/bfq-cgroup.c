@@ -895,4 +895,3 @@ static struct bfq_group *bfq_alloc_root_group(struct bfq_data *bfqd, int node)
 	return bfqg;
 }
 #endif
-

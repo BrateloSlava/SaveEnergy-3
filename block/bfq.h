@@ -1,5 +1,5 @@
 /*
- * BFQ-v7r3 for 3.4.0: data structures and common functions prototypes.
+ * BFQ-v7r4 for 3.4.0: data structures and common functions prototypes.
  *
  * Based on ideas and code from CFQ:
  * Copyright (C) 2003 Jens Axboe <axboe@kernel.dk>
@@ -216,8 +216,6 @@ struct bfq_group;
  *                      idle to backlogged
  * @service_from_backlogged: cumulative service received from the @bfq_queue
  *                           since the last transition from idle to backlogged
- * @bic: pointer to the bfq_io_cq owning the bfq_queue, set to %NULL if the
- *	 queue is shared
  *
  * A bfq_queue is a leaf request queue; it can be associated with an io_context
  * or more, if it is async or shared between cooperating processes. @cgroup
@@ -261,7 +259,6 @@ struct bfq_queue {
 	sector_t last_request_pos;
 
 	pid_t pid;
-	struct bfq_io_cq *bic;
 
 	/* weight-raising fields */
 	unsigned long wr_cur_max_time;
@@ -291,22 +288,11 @@ struct bfq_ttime {
  * @icq: associated io_cq structure
  * @bfqq: array of two process queues, the sync and the async
  * @ttime: associated @bfq_ttime struct
- * @wr_time_left: snapshot of the time left before weight raising ends
- *                for the sync queue associated to this process; this
- *		  snapshot is taken to remember this value while the weight
- *		  raising is suspended because the queue is merged with a
- *		  shared queue, and is used to set @raising_cur_max_time
- *		  when the queue is split from the shared queue and its
- *		  weight is raised again
- * @saved_idle_window: same purpose as the previous field for the idle window
  */
 struct bfq_io_cq {
 	struct io_cq icq; /* must be the first member */
 	struct bfq_queue *bfqq[2];
 	struct bfq_ttime ttime;
-
-	unsigned int wr_time_left;
-	unsigned int saved_idle_window;
 };
 
 enum bfq_device_speed {
@@ -341,14 +327,28 @@ enum bfq_device_speed {
  *		 queue under service, even if it is idling).
  * @busy_in_flight_queues: number of @bfq_queues containing pending or
  *                         in-flight requests, plus the @bfq_queue in service,
- *			   even if idle but waiting for the possible arrival
- *			   of its next sync request.
+ *                         even if idle but waiting for the possible arrival
+ *                         of its next sync request. This field is updated only
+ *                         if the device is rotational, but used only if the
+ *                         device is also NCQ-capable. The reason why the field
+ *                         is updated also for non-NCQ-capable rotational
+ *                         devices is related to the fact that the value of
+ *                         hw_tag may be set also later than when this field may
+ *                         need to be incremented for the first time(s).
+ *                         Taking also this possibility into account, to avoid
+ *                         unbalanced increments/decrements, would imply more
+ *                         overhead than just updating this field regardless of
+ *                         the value of hw_tag.
  * @const_seeky_busy_in_flight_queues: number of constantly-seeky @bfq_queues
  *                                     (that is, seeky queues that expired
  *                                     for budget timeout at least once)
  *                                     containing pending or in-flight
- *					requests, including the in-service
- *					@bfq_queue if constantly seeky.
+ *                                     requests, including the in-service
+ *                                     @bfq_queue if constantly seeky. This
+ *                                     field is updated only if the device
+ *                                     is rotational, but used only if the
+ *                                     device is also NCQ-capable (see the
+ *                                     comments to @busy_in_flight_queues).
  * @raised_busy_queues: number of weight-raised busy bfq_queues.
  * @queued: number of queued requests.
  * @rq_in_driver: number of requests dispatched and waiting for completion.
@@ -491,9 +491,8 @@ enum bfqq_state_flags {
 					 * until budget timeout
 					 */
 	BFQ_BFQQ_FLAG_coop,		/* bfqq is shared */
-	BFQ_BFQQ_FLAG_split_coop,	/* shared bfqq will be split */
-	BFQ_BFQQ_FLAG_just_split,	/* queue has just been split */
-	BFQ_BFQQ_FLAG_softrt_update,	/* may need softrt-next-start update */
+	BFQ_BFQQ_FLAG_split_coop,	/* shared bfqq will be splitted */
+	BFQ_BFQQ_FLAG_softrt_update,	/* needs softrt-next-start update */
 };
 
 #define BFQ_BFQQ_FNS(name)						\
@@ -521,7 +520,6 @@ BFQ_BFQQ_FNS(budget_new);
 BFQ_BFQQ_FNS(constantly_seeky);
 BFQ_BFQQ_FNS(coop);
 BFQ_BFQQ_FNS(split_coop);
-BFQ_BFQQ_FNS(just_split);
 BFQ_BFQQ_FNS(softrt_update);
 #undef BFQ_BFQQ_FNS
 
@@ -560,7 +558,7 @@ enum bfqq_expiration {
  * @active_entities: number of active entities belonging to the group; unused
  *                   for the root group. Used to know whether there are groups
  *                   with more than one active @bfq_entity (see the comments
- *		      to the function bfq_bfqq_must_not_expire()).
+ *                   to the function bfq_bfqq_must_not_expire()).
  *
  * Each (device, cgroup) pair has its own bfq_group, i.e., for each cgroup
  * there is a set of bfq_groups, each one collecting the lower-level
@@ -701,4 +699,3 @@ static void bfq_end_wr_async_queues(struct bfq_data *bfqd,
 static void bfq_put_async_queues(struct bfq_data *bfqd, struct bfq_group *bfqg);
 static void bfq_exit_bfqq(struct bfq_data *bfqd, struct bfq_queue *bfqq);
 #endif
-
