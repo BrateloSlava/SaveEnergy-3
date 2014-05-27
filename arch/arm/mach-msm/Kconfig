@@ -1796,11 +1796,22 @@ config CPU_OVERCLOCK
         help
           Qualcomm overclocking up to 1.674 GHz
 
-config GPU_OVERCLOCK
-        bool "Enable GPU Overclocking option 533 MHz"
-        default n
-        help
-          Qualcomm GPU overclocking to 533 MHz
+choice
+	prompt "Enable GPU Overclock"
+	default GPU_OVERCLOCK_400
+	help
+	  Select GPU max freq.
+
+	config GPU_OVERCLOCK_400
+		bool "Enable GPU without Overclocking (400 MHz)"
+
+	config GPU_OVERCLOCK_450
+		bool "Enable GPU Overclocking option 450 MHz"
+
+	config GPU_OVERCLOCK_533
+		bool "Enable GPU Overclocking option 533 MHz"
+
+endchoice
 
 config MSM_AVS_HW
 	bool "Enable Adaptive Voltage Scaling (AVS)"
