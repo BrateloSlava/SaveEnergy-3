@@ -1045,6 +1045,18 @@ static void dbs_freq_increase(struct cpufreq_policy *p, unsigned load, unsigned 
 	trace_cpufreq_ondemand_up (p->cpu, freq, p->cur);
 }
 
+int set_two_phase_freq(int cpufreq)
+{
+	int i  = 0;
+	for ( i = 0 ; i < NR_CPUS; i++)
+		two_phase_freq_array[i] = cpufreq;
+	return 0;
+}
+
+void set_two_phase_freq_by_cpu ( int cpu_nr, int cpufreq){
+	two_phase_freq_array[cpu_nr-1] = cpufreq;
+}
+
 int input_event_boosted(void)
 {
 	unsigned long flags;
@@ -1295,7 +1307,7 @@ if (dbs_tuners_ins.gboost) {
 			dbs_tuners_ins.up_threshold = old_up_threshold;
 	}
 	if (g_count > 40) {
-		boost_min_freq(1080000);
+		boost_min_freq(TWO_PHASE_FREQ);
 	}
 }
 //end
