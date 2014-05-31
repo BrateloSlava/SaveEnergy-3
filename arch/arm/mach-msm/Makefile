@@ -592,3 +592,4 @@ obj-$(CONFIG_INTELLI_PLUG) += intelli_plug.o
 
 obj-$(CONFIG_CPU_FREQ_MSM) += cpufreq.o
 obj-$(CONFIG_MSM_CPU_FREQ_SET_SCREEN_CAP) += cpufreq-cap.o
+obj-$(CONFIG_MSM_CPUFREQ_LIMITER) += cpufreq_limit.o

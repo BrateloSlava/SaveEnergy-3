@@ -1772,6 +1772,18 @@ config INTELLI_PLUG_DUAL
 	help
 	  Special dual-core mode for intelli-plug
 
+config MSM_CPUFREQ_LIMITER
+	tristate "MSM CPU frequency limiter"
+	depends on INTELLI_PLUG
+	default n
+	help
+	  This driver limits MSM CPU frequency through sysfs file system.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called cpufreq_stats.
+
+	  If in doubt, say N.
+
 config SLEEPY_PLUG
 	bool "Enable sleepy_plug by rmbq"
 	default n
