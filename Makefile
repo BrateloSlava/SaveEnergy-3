@@ -571,7 +571,7 @@ KBUILD_CFLAGS	+= -O3 -marm -mtune=cortex-a15 -mcpu=cortex-a15 -mfpu=neon-vfpv4 -
 			-mvectorize-with-neon-quad -fgcse-sm -fivopts -ftree-vectorize -fira-loop-pressure \
 			-fgraphite-identity -floop-interchange -floop-strip-mine -floop-block \
 			-Wno-error=unused-parameter -Wno-error=unused-but-set-variable -Wno-error=maybe-uninitialized \
-			-fweb -ftracer -ffunction-sections -fdata-sections
+			-fweb -ffunction-sections -fdata-sections
 endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile

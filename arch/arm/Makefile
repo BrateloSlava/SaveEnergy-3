@@ -67,7 +67,7 @@ ALL_FLAG   := -DNDEBUG -Wno-trigraphs \
 CUSTOM_FLAG	:= -marm -mtune=cortex-a15 -mcpu=cortex-a15 -mfpu=neon-vfpv4 -ffast-math \
 			-fgcse-sm -fivopts -ftree-partial-pre -funswitch-loops -fpredictive-commoning -fgcse-after-reload -ftree-vectorize -fira-loop-pressure \
 			-ftree-loop-im -ftree-loop-ivcanon -fsection-anchors \
-			-fgraphite-identity -floop-interchange -floop-strip-mine -floop-block -fweb -ftracer -mvectorize-with-neon-quad \
+			-fgraphite-identity -floop-interchange -floop-strip-mine -floop-block -fweb -mvectorize-with-neon-quad \
 			-ffunction-sections -fdata-sections
 
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
