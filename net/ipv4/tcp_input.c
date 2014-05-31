@@ -3417,7 +3417,8 @@ static void tcp_sack_remove(struct tcp_sock *tp)
 
 			
 			for (i=this_sack+1; i < num_sacks; i++)
-				tp->selective_acks[i-1] = tp->selective_acks[i];
+				if (i < 4)
+					tp->selective_acks[i-1] = tp->selective_acks[i];
 			num_sacks--;
 			continue;
 		}
