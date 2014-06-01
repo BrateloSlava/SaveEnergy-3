@@ -22,7 +22,7 @@ unsigned long acpuclk_get_rate(int cpu)
 	if (!init_done)
 		return 0;
 
-	if (!acpuclk_data->get_rate)
+	if (!acpuclk_data || !acpuclk_data->get_rate)
 		return 0;
 
 	return acpuclk_data->get_rate(cpu);
@@ -30,7 +30,8 @@ unsigned long acpuclk_get_rate(int cpu)
 
 int acpuclk_set_rate(int cpu, unsigned long rate, enum setrate_reason reason)
 {
-	if (!acpuclk_data->set_rate)
+	if (!acpuclk_data || !acpuclk_data->set_rate)
+
 		return 0;
 
 	return acpuclk_data->set_rate(cpu, rate, reason);
@@ -38,6 +39,8 @@ int acpuclk_set_rate(int cpu, unsigned long rate, enum setrate_reason reason)
 
 uint32_t acpuclk_get_switch_time(void)
 {
+	if (!acpuclk_data)
+		return 0;
 	return acpuclk_data->switch_time_us;
 }
 
