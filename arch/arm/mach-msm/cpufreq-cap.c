@@ -28,13 +28,15 @@
 #include <linux/suspend.h>
 #include <mach/cpufreq.h>
 
+#include <linux/freq_define.h>
+
 #define CPUFREQ_CAP_TAG                       "[CPUFREQ_CAP]: "
 
 static struct kobject *auto_sysfs_kobject;
 #ifdef CONFIG_MSM_CPU_FREQ_SCREEN_CAP
 #define DEFAULT_SCREEN_OFF_FREQ_CAP CONFIG_MSM_CPU_FREQ_SCREEN_CAP
 #else
-#define DEFAULT_SCREEN_OFF_FREQ_CAP 702000
+#define DEFAULT_SCREEN_OFF_FREQ_CAP MAX_CPU_SLEEP_FREQ
 #endif
 static unsigned int screen_off_max_freq = DEFAULT_SCREEN_OFF_FREQ_CAP;
 static bool screen_off_cap = true;

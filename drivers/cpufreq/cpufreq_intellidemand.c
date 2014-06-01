@@ -29,20 +29,11 @@
 #include <linux/workqueue.h>
 #include <linux/slab.h>
 #include <linux/synaptics_i2c_rmi.h>
+#include <linux/freq_define.h>
 
 
 #define INTELLIDEMAND_MAJOR_VERSION    5
 #define INTELLIDEMAND_MINOR_VERSION    0
-
-/* defaults for min/max CPU freq values */
-#define MIN_CPU_INTELLI_FREQ 162000
-
-#ifdef CONFIG_CPU_OVERCLOCK
-#define MAX_CPU_INTELLI_FREQ	1674000
-#else
-#define MAX_CPU_INTELLI_FREQ	1188000 
-#endif
-
 
 /*
  * dbs is used in this file as a shortform for demandbased switching
@@ -67,8 +58,8 @@
 #define DBS_UI_SAMPLING_TIMEOUT			(80)
 
 #define DEF_FREQ_STEP				(25)
-#define DEF_STEP_UP_EARLY_HISPEED		(918000)
-#define DEF_STEP_UP_INTERIM_HISPEED		(1188000)
+#define DEF_STEP_UP_EARLY_HISPEED		(702000)
+#define DEF_STEP_UP_INTERIM_HISPEED		(1026000)
 #define DEF_SAMPLING_EARLY_HISPEED_FACTOR	(2)
 #define DEF_SAMPLING_INTERIM_HISPEED_FACTOR	(3)
 
@@ -105,7 +96,7 @@ static freq_table_idx pre_freq_idx[SUP_CORE_NUM] = {};
 #if defined(SMART_UP_SLOW_UP_AT_HIGH_FREQ)
 
 #define SUP_SLOW_UP_FREQUENCY 		(810000)
-#define SUP_HIGH_SLOW_UP_FREQUENCY 	(1188000)
+#define SUP_HIGH_SLOW_UP_FREQUENCY 	(1080000)
 #define SUP_SLOW_UP_LOAD 		(90)
 
 typedef struct {
@@ -261,8 +252,8 @@ static struct dbs_tuners {
 	.up_threshold_any_cpu_load = DEF_FREQUENCY_UP_THRESHOLD,
 	.ignore_nice = 0,
 	.powersave_bias = 0,
-	.sync_freq = 0,
-	.optimal_freq = 0,
+	.sync_freq = MAX_CPU_SYNC_FREQ,
+	.optimal_freq = MAX_CPU_SYNC_FREQ,
 	//20130711 smart_up 
 	.smart_up = SMART_UP_PLUS,
 	.smart_slow_up_load = SUP_SLOW_UP_LOAD,
@@ -1185,7 +1176,7 @@ static ssize_t store_step_up_interim_hispeed(struct kobject *a,
 	int ret;
 	ret = sscanf(buf, "%u", &input);
 
-	if (ret != 1 || input > MAX_CPU_INTELLI_FREQ || input < 0) {
+	if (ret != 1 || input > MAX_CPU_GOVERNOR_FREQ || input < 0) {
 		return -EINVAL;
 	}
 	dbs_tuners_ins.step_up_interim_hispeed = input;

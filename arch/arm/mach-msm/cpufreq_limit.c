@@ -23,18 +23,14 @@
 
 #include <mach/cpufreq.h>
 
+#include <linux/freq_define.h>
+
 #define MSM_CPUFREQ_LIMIT_MAJOR		1
 #define MSM_CPUFREQ_LIMIT_MINOR		2
 
 //#define DEBUG_CPU_LIMITER
 
-#ifdef CONFIG_CPU_OVERCLOCK
-#define CPU_FREQ_LIMIT_MAX	1674000
-#else
-#define CPU_FREQ_LIMIT_MAX	1188000 
-#endif
-
-uint32_t limited_max_freq = CPU_FREQ_LIMIT_MAX;
+uint32_t limited_max_freq = MAX_CPU_GOVERNOR_FREQ;
 
 static int update_cpu_max_freq(int cpu, uint32_t max_freq)
 {
@@ -151,4 +147,3 @@ module_exit(msm_cpufreq_limit_exit);
 MODULE_LICENSE("GPL v2"); 
 MODULE_AUTHOR("Paul Reioux <reioux@gmail.com>");
 MODULE_DESCRIPTION("Krait CPU frequency Limit Driver");
-

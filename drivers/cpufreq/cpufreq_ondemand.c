@@ -30,20 +30,15 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/cpufreq_ondemand.h>
 
+#include <linux/freq_define.h>
+
 //gboost
 #include <mach/kgsl.h>
 static int old_up_threshold;
 static int g_count = 0;
 
-#ifdef CONFIG_CPU_OVERCLOCK
-#define MAX_CPU_ONDEMAND_FREQ	1674000
-#else
-#define MAX_CPU_ONDEMAND_FREQ	1188000 
-#endif
-
-
-#define TWO_PHASE_FREQ		918000
-#define INPUT_EVENT_FREQ	810000
+#define TWO_PHASE_FREQ		MAX_TWO_PHASE_FREQ
+#define INPUT_EVENT_FREQ	MAX_INPUT_EVENT_FREQ
 
 #define DEF_SAMPLING_RATE			(30000)
 #define DEF_FREQUENCY_DOWN_DIFFERENTIAL		(10)
