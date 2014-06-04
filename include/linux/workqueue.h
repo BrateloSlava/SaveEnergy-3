@@ -296,8 +296,7 @@ extern void workqueue_set_max_active(struct workqueue_struct *wq,
 extern bool workqueue_congested(unsigned int cpu, struct workqueue_struct *wq);
 extern unsigned int work_cpu(struct work_struct *work);
 extern unsigned int work_busy(struct work_struct *work);
-extern int print_workqueue(void);
-extern unsigned long get_work_func_of_task_struct(struct task_struct *tsk);
+
 static inline bool cancel_delayed_work(struct delayed_work *work)
 {
 	bool ret;
