@@ -1,3 +1,4 @@
+/* Freezer declarations */
 
 #ifndef FREEZER_H_INCLUDED
 #define FREEZER_H_INCLUDED
@@ -7,10 +8,14 @@
 #include <linux/atomic.h>
 
 #ifdef CONFIG_FREEZER
-extern atomic_t system_freezing_cnt;	
-extern bool pm_freezing;		
-extern bool pm_nosig_freezing;		
+extern atomic_t system_freezing_cnt;	/* nr of freezing conds in effect */
+extern bool pm_freezing;		/* PM freezing in effect */
+extern bool pm_nosig_freezing;		/* PM nosig freezing in effect */
 
+/*
+ * Timeout for stopping processes
+ */
+extern unsigned int freeze_timeout_msecs;
 static inline bool frozen(struct task_struct *p)
 {
 	return p->flags & PF_FROZEN;

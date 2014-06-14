@@ -483,7 +483,31 @@ pm_trace_dev_match_store(struct kobject *kobj, struct kobj_attribute *attr,
 
 power_attr(pm_trace_dev_match);
 
-#endif 
+#endif /* CONFIG_PM_TRACE */
+
+#ifdef CONFIG_FREEZER
+static ssize_t pm_freeze_timeout_show(struct kobject *kobj,
+				      struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", freeze_timeout_msecs);
+}
+
+static ssize_t pm_freeze_timeout_store(struct kobject *kobj,
+				       struct kobj_attribute *attr,
+				       const char *buf, size_t n)
+{
+	unsigned long val;
+
+	if (kstrtoul(buf, 10, &val))
+		return -EINVAL;
+
+	freeze_timeout_msecs = val;
+	return n;
+}
+
+power_attr(pm_freeze_timeout);
+
+#endif	/* CONFIG_FREEZER*/
 
 #ifdef CONFIG_USER_WAKELOCK
 power_attr(wake_lock);
@@ -802,7 +826,7 @@ state_onchg_store(struct kobject *kobj, struct kobj_attribute *attr,
 power_attr(state_onchg);
 #endif
 
-static struct attribute *g[] = {
+static struct attribute * g[] = {
 	&state_attr.attr,
 #ifdef CONFIG_PM_TRACE
 	&pm_trace_attr.attr,
@@ -831,6 +855,9 @@ static struct attribute *g[] = {
 	&powersave_attr.attr,
 	&cpunum_floor_attr.attr,
 	&cpunum_ceiling_attr.attr,
+#endif
+#ifdef CONFIG_FREEZER
+	&pm_freeze_timeout_attr.attr,
 #endif
 	NULL,
 };
